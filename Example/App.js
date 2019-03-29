@@ -7,7 +7,7 @@
  */
 
 import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View} from 'react-native';
+import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
 import StripeTerminal from './StripeTerminal.js';
 
 const instructions = Platform.select({
@@ -22,12 +22,18 @@ export default class App extends Component {
     super(props);
 
     this.state = {
-      displayText: "Loading stuff..."
+      isConnecting: false,
+      readerConnected: false,
+      completedPayment: null,
+      displayText: "Loading..."
     };
+
+    this.discover = this.discover.bind(this);
+    this.createPayment = this.createPayment.bind(this);
 
     StripeTerminal.initialize({
       fetchConnectionToken: () => {
-        return fetch('http://10.0.1.46:8080/_scanner/terminal_connection_token?api_key=2e21c24db5f8bfae31cf420b60f45df6', {
+        return fetch('http://10.0.1.35:8080/_scanner/terminal_connection_token?api_key=2e21c24db5f8bfae31cf420b60f45df6', {
           method: 'POST'
         })
         .then(resp => resp.json())
@@ -38,44 +44,67 @@ export default class App extends Component {
       }
     });
 
-    var isConnecting = false;
+    StripeTerminal.addDidChangeConnectionStatusListener(({ status }) => {
+      console.log("status change", status);
+      this.setState({ readerConnected: status === StripeTerminal.ConnectionStatusConnected });
+    });
 
-    StripeTerminal.addDidBeginWaitingForReaderInputListener(text => {
+    StripeTerminal.addDidDisconnectUnexpectedlyFromReaderListener(() => {
+      this.setState({ displayText: 'Disconnected unexpectedly! Oh noez' });
+    })
+
+    StripeTerminal.addDidBeginWaitingForReaderInputListener(({ text }) => {
       this.setState({ displayText: text });
     });
 
-    StripeTerminal.addDidRequestReaderInputPrompt(text => {
+    StripeTerminal.addDidRequestReaderInputPromptListener(({ text }) => {
       this.setState({ displayText: text });
     });
 
     StripeTerminal.addReadersDiscoveredListener(readers => {
-      console.log('readers discovered', readers);
-      if (readers.length && !isConnecting) {
-        isConnecting = true;
+      if (readers.length && !this.state.readerConnected && !this.state.isConnecting) {
+        this.setState({ isConnecting: true });
         StripeTerminal.connectReader(readers[0].serialNumber)
           .then(() => {
-            console.log('reader connected');
-            StripeTerminal.createPaymentIntent({ amount: 1200, currency: "usd" })
-            .then(intent => {
-              console.log('wowee, we did it', intent);
-            })
-            .catch(err => {
-              console.log('pay failed', err);
-            });
-           }).catch(e => console.log('failed to connect', e));
+            this.setState({ isConnecting: false });
+          }).catch(e => console.log('failed to connect', e));
       }
     });
+  }
 
-    StripeTerminal.discoverReaders(StripeTerminal.DeviceTypeReaderSimulator,
-      // StripeTerminal.DeviceTypeChipper2X,
-      StripeTerminal.DiscoveryMethodBluetoothProximity);
+  discover() {
+    this.setState({ completedPayment: 'discovery...' });
+
+    StripeTerminal.discoverReaders(
+      //StripeTerminal.DeviceTypeReaderSimulator,
+      StripeTerminal.DeviceTypeChipper2X,
+      StripeTerminal.DiscoveryMethodBluetoothProximity
+    );
+  }
+
+  createPayment() {
+    StripeTerminal.createPaymentIntent({ amount: 1200, currency: "usd" })
+      .then(intent => {
+        this.setState({ completedPayment: intent });
+      })
+      .catch(err => {
+        this.setState({ completedPayment: err });
+      });
   }
 
   render() {
     return (
       <View style={styles.container}>
         <Text style={styles.welcome}>{this.state.displayText}</Text>
-        <Text style={styles.instructions}>Yeehaw this is Stripeyyy</Text>
+        <Text style={styles.instructions}>Connected: {this.state.readerConnected}</Text>
+        <Text style={styles.instructions}>{JSON.stringify(this.state.completedPayment)}</Text>
+
+        <TouchableOpacity onPress={this.discover}>
+          <Text>Discover readers</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={this.createPayment}>
+          <Text>Create payment</Text>
+        </TouchableOpacity>
       </View>
     );
   }

@@ -8,7 +8,7 @@
 
 #import <StripeTerminal/StripeTerminal.h>
 
-@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPReaderInputDelegate> {
+@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPReaderInputDelegate, SCPTerminalDelegate> {
 
     NSArray<SCPReader *> *readers;
     SCPReader *reader;

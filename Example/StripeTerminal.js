@@ -19,17 +19,36 @@ class StripeTerminal {
   PaymentIntentStatusCanceled = RNStripeTerminal.PaymentIntentStatusCanceled;
   PaymentIntentStatusSucceeded = RNStripeTerminal.PaymentIntentStatusSucceeded;
 
+  // Reader events
+  ReaderEventCardInserted = RNStripeTerminal.ReaderEventCardInserted;
+  ReaderEventCardRemoved = RNStripeTerminal.ReaderEventCardRemoved;
+
+  // Payment status
+  PaymentStatusNotReady = RNStripeTerminal.PaymentStatusNotReady;
+  PaymentStatusReady = RNStripeTerminal.PaymentStatusReady;
+  PaymentStatusCollectingPaymentMethod = RNStripeTerminal.PaymentStatusCollectingPaymentMethod;
+  PaymentStatusConfirmingPaymentIntent = RNStripeTerminal.PaymentStatusConfirmingPaymentIntent;
+
+  // Connection status
+  ConnectionStatusNotConnected = RNStripeTerminal.ConnectionStatusNotConnected;
+  ConnectionStatusConnected = RNStripeTerminal.ConnectionStatusConnected;
+  ConnectionStatusBusy = RNStripeTerminal.ConnectionStatusBusy;
+
+  // Fetch connection token. Overwritten in call to initialize
+  _fetchConnectionToken = () => Promise.reject('You must initialize RNStripeTerminal first.');
+
   constructor() {
     this.listener = new NativeEventEmitter(RNStripeTerminal);
-  }
 
-  initialize({ fetchConnectionToken }) {
     this.listener.addListener('requestConnectionToken', () => {
-      fetchConnectionToken()
+      this._fetchConnectionToken()
         .then(token => RNStripeTerminal.setConnectionToken(token, null))
         .catch(err => RNStripeTerminal.setConnectionToken(null, err));
     });
+  }
 
+  initialize({ fetchConnectionToken }) {
+    this._fetchConnectionToken = fetchConnectionToken;
     RNStripeTerminal.initialize();
   }
 
@@ -41,19 +60,39 @@ class StripeTerminal {
     return this.listener.addListener('didBeginWaitingForReaderInput', listener);
   }
 
-  addDidRequestReaderInputPrompt(listener) {
+  addDidRequestReaderInputPromptListener(listener) {
     return this.listener.addListener('didRequestReaderInputPrompt', listener);
+  }
+
+  addDidReportReaderEventListener(listener) {
+    return this.listener.addListener('didReportReaderEvent', listener);
+  }
+
+  addDidChangePaymentStatusListener(listener) {
+    return this.listener.addListener('didChangePaymentStatus', listener);
+  }
+
+  addDidChangeConnectionStatusListener(listener) {
+    return this.listener.addListener('didChangeConnectionStatus', listener);
+  }
+
+  addDidDisconnectUnexpectedlyFromReaderListener(listener) {
+    return this.listener.addListener('didDisconnectUnexpectedlyFromReader', listener);
   }
 
   discoverReaders(deviceType, method) {
     RNStripeTerminal.discoverReaders(deviceType, method);
   }
 
+  checkForReaderSoftwareUpdate() {
+    RNStripeTerminal.checkForReaderSoftwareUpdate();
+  }
+
   _wrapPromiseReturn(event, call, key) {
     return new Promise((resolve, reject) => {
       const subscription = this.listener.addListener(event, data => {
         if (data.error) {
-          reject(data.error);
+          reject(data);
         } else {
           resolve(key ? data[key] : data);
         }

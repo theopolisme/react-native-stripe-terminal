@@ -23,7 +23,11 @@ static dispatch_once_t onceToken = 0;
              @"readerConnection",
              @"paymentIntentCreation",
              @"didBeginWaitingForReaderInput",
-             @"didRequestReaderInputPrompt"
+             @"didRequestReaderInputPrompt",
+             @"didReportReaderEvent",
+             @"didChangePaymentStatus",
+             @"didChangeConnectionStatus",
+             @"didDisconnectUnexpectedlyFromReader"
              ];
 }
 
@@ -32,13 +36,27 @@ static dispatch_once_t onceToken = 0;
     return @{
              @"DeviceTypeChipper2X": @(SCPDeviceTypeChipper2X),
              @"DeviceTypeReaderSimulator": @(SCPDeviceTypeReaderSimulator),
+
              @"DiscoveryMethodBluetoothScan": @(SCPDiscoveryMethodBluetoothScan),
              @"DiscoveryMethodBluetoothProximity": @(SCPDiscoveryMethodBluetoothProximity),
+
              @"PaymentIntentStatusRequiresSource": @(SCPPaymentIntentStatusRequiresSource),
              @"PaymentIntentStatusRequiresConfirmation": @(SCPPaymentIntentStatusRequiresConfirmation),
              @"PaymentIntentStatusRequiresCapture": @(SCPPaymentIntentStatusRequiresCapture),
              @"PaymentIntentStatusCanceled": @(SCPPaymentIntentStatusCanceled),
              @"PaymentIntentStatusSucceeded": @(SCPPaymentIntentStatusSucceeded),
+
+             @"ReaderEventCardInserted": @(SCPReaderEventCardInserted),
+             @"ReaderEventCardRemoved": @(SCPReaderEventCardRemoved),
+
+             @"PaymentStatusNotReady": @(SCPPaymentStatusNotReady),
+             @"PaymentStatusReady": @(SCPPaymentStatusReady),
+             @"PaymentStatusCollectingPaymentMethod": @(SCPPaymentStatusCollectingPaymentMethod),
+             @"PaymentStatusConfirmingPaymentIntent": @(SCPPaymentStatusConfirmingPaymentIntent),
+             
+             @"ConnectionStatusNotConnected": @(SCPConnectionStatusNotConnected),
+             @"ConnectionStatusConnected": @(SCPConnectionStatusConnected),
+             @"ConnectionStatusBusy": @(SCPConnectionStatusBusy),
              };
 }
 
@@ -91,10 +109,10 @@ RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)deviceType method:(NSInteger *)me
 }
 
 RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
-    int readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
+    unsigned int readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
-    
+
     [SCPTerminal.shared connectReader:readers[readerIndex] completion:^(SCPReader * _Nullable reader_, NSError * _Nullable error) {
         reader = reader_;
         if (error) {
@@ -122,22 +140,25 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
     
     SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
     
-    NSLog(@"creating payment intent...");
     [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable createdIntent, NSError * _Nullable creationError) {
         if (creationError) {
             [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [creationError localizedDescription]}];
             
         } else {
-            NSLog(@"collecting payment method...");
             [SCPTerminal.shared collectPaymentMethod:createdIntent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
                 if (collectionError) {
-                    [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [collectionError localizedDescription]}];
+                    [self sendEventWithName:@"paymentIntentCreation" body:@{
+                                                                            @"error": [collectionError localizedDescription],
+                                                                            @"intent": [self serializePaymentIntent:createdIntent]
+                                                                            }];
                     
                 } else {
-                    NSLog(@"confirming payment intent...");
-                    [SCPTerminal.shared confirmPaymentIntent:collectedIntent completion:^(SCPPaymentIntent * _Nullable confirmedIntent, SCPConfirmError * _Nullable confirmingError) {
-                        if (confirmingError) {
-                            [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [confirmingError localizedDescription]}];
+                    [SCPTerminal.shared confirmPaymentIntent:collectedIntent completion:^(SCPPaymentIntent * _Nullable confirmedIntent, SCPConfirmError * _Nullable confirmationError) {
+                        if (confirmationError) {
+                            [self sendEventWithName:@"paymentIntentCreation" body:@{
+                                                                                    @"error": [confirmationError localizedDescription],
+                                                                                    @"intent": [self serializePaymentIntent:collectedIntent]
+                                                                                    }];
                             
                         } else {
                             [self sendEventWithName:@"paymentIntentCreation" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
@@ -150,7 +171,6 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didBeginWaitingForReaderInput:(SCPReaderInputOptions)inputOptions {
-    NSLog(@"did wait in...");
     [self sendEventWithName:@"didBeginWaitingForReaderInput" body:
      @{
        @"text": [SCPTerminal stringFromReaderInputOptions:inputOptions]
@@ -158,14 +178,50 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderInputPrompt:(SCPReaderInputPrompt)inputPrompt {
-    NSLog(@"did req in...");
     [self sendEventWithName:@"didRequestReaderInputPrompt" body:
      @{
        @"text": [SCPTerminal stringFromReaderInputPrompt:inputPrompt]
        }];
 }
 
+- (void)terminal:(SCPTerminal *)terminal didReportReaderEvent:(SCPReaderEvent)event info:(NSDictionary *)info {
+    [self sendEventWithName:@"didReportReaderEvent" body:
+     @{
+       @"event": @(event)
+       }];
+}
+
+- (void)terminal:(SCPTerminal *)terminal didChangePaymentStatus:(SCPPaymentStatus)status {
+    [self sendEventWithName:@"didChangePaymentStatus" body:
+     @{
+       @"status": @(status)
+       }];
+}
+
+- (void)terminal:(SCPTerminal *)terminal didChangeConnectionStatus:(SCPConnectionStatus)status {
+    [self sendEventWithName:@"didChangeConnectionStatus" body:
+     @{
+       @"status": @(status)
+       }];
+}
+
+- (void)terminal:(SCPTerminal *)terminal didDisconnectUnexpectedlyFromReader:(SCPReader *)reader {
+    [self sendEventWithName:@"didDisconnectUnexpectedlyFromReader" body:
+     @{
+       @"serialNumber": reader.serialNumber
+       }];
+}
+
+RCT_EXPORT_METHOD(clearCachedCredentials) {
+    [SCPTerminal.shared clearCachedCredentials];
+}
+
+RCT_EXPORT_METHOD(disconnectReader) {
+    [SCPTerminal.shared disconnectReader:^(NSError * _Nullable error) {
+        // fall through
+    }];
+}
+
 RCT_EXPORT_MODULE()
 
 @end
-
