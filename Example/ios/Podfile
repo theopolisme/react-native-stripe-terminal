@@ -1,0 +1,31 @@
+# Uncomment the next line to define a global platform for your project
+# platform :ios, '9.0'
+
+target 'Example' do
+  # Uncomment the next line if you're using Swift or would like to use dynamic frameworks
+  # use_frameworks!
+
+  pod 'React',
+    :path => "../node_modules/react-native",
+    :inhibit_warnings => true,
+    :subspecs => [
+      "Core",
+      "ART",
+      "RCTActionSheet",
+      "RCTAnimation",
+      "RCTCameraRoll",
+      "RCTGeolocation",
+      "RCTImage",
+      "RCTNetwork",
+      "RCTText",
+      "RCTVibration",
+      "RCTWebSocket",
+      "DevSupport",
+      "CxxBridge"
+    ]
+
+  pod 'StripeTerminal', '1.0.0-b6'
+
+  pod 'RNStripeTerminal', :path => '../node_modules/react-native-stripe-terminal'
+
+end

@@ -1,0 +1,1 @@
+../../../../StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers/SCPJSONDecodable.h

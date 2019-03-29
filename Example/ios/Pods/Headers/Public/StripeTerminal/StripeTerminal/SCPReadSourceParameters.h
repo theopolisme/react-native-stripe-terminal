@@ -1,0 +1,1 @@
+../../../../StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers/SCPReadSourceParameters.h
