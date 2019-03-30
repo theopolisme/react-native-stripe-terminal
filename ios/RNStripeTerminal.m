@@ -27,7 +27,8 @@ static dispatch_once_t onceToken = 0;
              @"didReportReaderEvent",
              @"didChangePaymentStatus",
              @"didChangeConnectionStatus",
-             @"didDisconnectUnexpectedlyFromReader"
+             @"didDisconnectUnexpectedlyFromReader",
+             @"connectedReader"
              ];
 }
 
@@ -36,19 +37,19 @@ static dispatch_once_t onceToken = 0;
     return @{
              @"DeviceTypeChipper2X": @(SCPDeviceTypeChipper2X),
              @"DeviceTypeReaderSimulator": @(SCPDeviceTypeReaderSimulator),
-
+             
              @"DiscoveryMethodBluetoothScan": @(SCPDiscoveryMethodBluetoothScan),
              @"DiscoveryMethodBluetoothProximity": @(SCPDiscoveryMethodBluetoothProximity),
-
+             
              @"PaymentIntentStatusRequiresSource": @(SCPPaymentIntentStatusRequiresSource),
              @"PaymentIntentStatusRequiresConfirmation": @(SCPPaymentIntentStatusRequiresConfirmation),
              @"PaymentIntentStatusRequiresCapture": @(SCPPaymentIntentStatusRequiresCapture),
              @"PaymentIntentStatusCanceled": @(SCPPaymentIntentStatusCanceled),
              @"PaymentIntentStatusSucceeded": @(SCPPaymentIntentStatusSucceeded),
-
+             
              @"ReaderEventCardInserted": @(SCPReaderEventCardInserted),
              @"ReaderEventCardRemoved": @(SCPReaderEventCardRemoved),
-
+             
              @"PaymentStatusNotReady": @(SCPPaymentStatusNotReady),
              @"PaymentStatusReady": @(SCPPaymentStatusReady),
              @"PaymentStatusCollectingPaymentMethod": @(SCPPaymentStatusCollectingPaymentMethod),
@@ -97,6 +98,7 @@ RCT_EXPORT_METHOD(setConnectionToken:(NSString *)token error:(NSString *)errorMe
 RCT_EXPORT_METHOD(initialize) {
     dispatch_once(&onceToken, ^{
         [SCPTerminal setTokenProvider:self];
+        SCPTerminal.shared.delegate = self;
     });
     SCPTerminal.shared.logLevel = SCPLogLevelVerbose;
 }
@@ -112,7 +114,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
     unsigned int readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
-
+    
     [SCPTerminal.shared connectReader:readers[readerIndex] completion:^(SCPReader * _Nullable reader_, NSError * _Nullable error) {
         reader = reader_;
         if (error) {
@@ -135,26 +137,17 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
 }
 
 RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
-    NSInteger amount = [RCTConvert NSInteger:options[@"amount"]];
-    NSString *currency = [RCTConvert NSString:options[@"currency"]];
-    
-    SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
- 
-    NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
-    if (applicationFeeAmount) {
-        params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
-    }
-
-    [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable createdIntent, NSError * _Nullable creationError) {
+    void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
         if (creationError) {
             [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [creationError localizedDescription]}];
             
         } else {
-            [SCPTerminal.shared collectPaymentMethod:createdIntent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
+            pendingCreatePaymentIntent = [SCPTerminal.shared collectPaymentMethod:intent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
+                pendingCreatePaymentIntent = nil;
                 if (collectionError) {
                     [self sendEventWithName:@"paymentIntentCreation" body:@{
                                                                             @"error": [collectionError localizedDescription],
-                                                                            @"intent": [self serializePaymentIntent:createdIntent]
+                                                                            @"intent": [self serializePaymentIntent:intent]
                                                                             }];
                     
                 } else {
@@ -172,7 +165,26 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
                 }
             }];
         }
-    }];
+    };
+    
+    NSString *paymentIntent = [RCTConvert NSString:options[@"paymentIntent"]];
+    
+    if (paymentIntent) {
+        [SCPTerminal.shared retrievePaymentIntent:paymentIntent completion:onIntent];
+        
+    } else {
+        NSInteger amount = [RCTConvert NSInteger:options[@"amount"]];
+        NSString *currency = [RCTConvert NSString:options[@"currency"]];
+        
+        SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
+        
+        NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
+        if (applicationFeeAmount) {
+            params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
+        }
+        
+        [SCPTerminal.shared createPaymentIntent:params completion:onIntent];
+    }
 }
 
 - (void)terminal:(SCPTerminal *)terminal didBeginWaitingForReaderInput:(SCPReaderInputOptions)inputOptions {
@@ -225,6 +237,22 @@ RCT_EXPORT_METHOD(disconnectReader) {
     [SCPTerminal.shared disconnectReader:^(NSError * _Nullable error) {
         // fall through
     }];
+}
+
+RCT_EXPORT_METHOD(getConnectedReader) {
+    SCPReader *reader = SCPTerminal.shared.connectedReader;
+    [self sendEventWithName:@"connectedReader" body:
+     reader ? @{ @"serialNumber": reader.serialNumber } : @{}];
+}
+
+RCT_EXPORT_METHOD(abortCreatePaymentIntent) {
+    if (pendingCreatePaymentIntent) {
+        [pendingCreatePaymentIntent cancel:^(NSError * _Nullable error) {
+            if (!error) {
+                pendingCreatePaymentIntent = nil;
+            }
+        }];
+    }
 }
 
 RCT_EXPORT_MODULE()

@@ -12,6 +12,7 @@
 
     NSArray<SCPReader *> *readers;
     SCPReader *reader;
+    SCPCancelable *pendingCreatePaymentIntent;
     SCPConnectionTokenCompletionBlock pendingConnectionTokenCompletionBlock;
 }
 
