@@ -21,7 +21,7 @@ static dispatch_once_t onceToken = 0;
              @"requestConnectionToken",
              @"readersDiscovered",
              @"readerConnection",
-             @"paymentIntentCreation",
+             @"paymentCreation",
              @"didBeginWaitingForReaderInput",
              @"didRequestReaderInputPrompt",
              @"didReportReaderEvent",
@@ -136,7 +136,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
              };
 }
 
-RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
+RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
     void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
         if (creationError) {
             [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [creationError localizedDescription]}];
@@ -245,7 +245,7 @@ RCT_EXPORT_METHOD(getConnectedReader) {
      reader ? @{ @"serialNumber": reader.serialNumber } : @{}];
 }
 
-RCT_EXPORT_METHOD(abortCreatePaymentIntent) {
+RCT_EXPORT_METHOD(abortCreatePayment) {
     if (pendingCreatePaymentIntent) {
         [pendingCreatePaymentIntent cancel:^(NSError * _Nullable error) {
             if (!error) {

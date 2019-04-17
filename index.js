@@ -1,4 +1,7 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
+import { useStripeTerminalState,
+         useStripeTerminalConnectReader,
+         useStripeTerminalCreatePayment } from './hooks';
 
 const { RNStripeTerminal } = NativeModules;
 
@@ -45,47 +48,24 @@ class StripeTerminal {
         .then(token => RNStripeTerminal.setConnectionToken(token, null))
         .catch(err => RNStripeTerminal.setConnectionToken(null, err));
     });
+
+    this._createListeners([
+      'logEvent',
+      'readersDiscovered',
+      'didBeginWaitingForReaderInput',
+      'didRequestReaderInputPrompt',
+      'didReportReaderEvent',
+      'didChangePaymentStatus',
+      'didChangeConnectionStatus',
+      'didDisconnectUnexpectedlyFromReader'
+    ])
   }
 
-  initialize({ fetchConnectionToken }) {
-    this._fetchConnectionToken = fetchConnectionToken;
-    RNStripeTerminal.initialize();
-  }
-
-  addReadersDiscoveredListener(listener) {
-    return this.listener.addListener('readersDiscovered', listener);
-  }
-
-  addDidBeginWaitingForReaderInputListener(listener) {
-    return this.listener.addListener('didBeginWaitingForReaderInput', listener);
-  }
-
-  addDidRequestReaderInputPromptListener(listener) {
-    return this.listener.addListener('didRequestReaderInputPrompt', listener);
-  }
-
-  addDidReportReaderEventListener(listener) {
-    return this.listener.addListener('didReportReaderEvent', listener);
-  }
-
-  addDidChangePaymentStatusListener(listener) {
-    return this.listener.addListener('didChangePaymentStatus', listener);
-  }
-
-  addDidChangeConnectionStatusListener(listener) {
-    return this.listener.addListener('didChangeConnectionStatus', listener);
-  }
-
-  addDidDisconnectUnexpectedlyFromReaderListener(listener) {
-    return this.listener.addListener('didDisconnectUnexpectedlyFromReader', listener);
-  }
-
-  discoverReaders(deviceType, method) {
-    RNStripeTerminal.discoverReaders(deviceType, method);
-  }
-
-  checkForReaderSoftwareUpdate() {
-    RNStripeTerminal.checkForReaderSoftwareUpdate();
+  _createListeners(keys) {
+    for (const k in keys) {
+      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = \
+        (listener) => this.listener.addListener(k, listener);
+    }
   }
 
   _wrapPromiseReturn(event, call, key) {
@@ -103,16 +83,23 @@ class StripeTerminal {
     });
   }
 
+  initialize({ fetchConnectionToken }) {
+    this._fetchConnectionToken = fetchConnectionToken;
+    RNStripeTerminal.initialize();
+  }
+
+  discoverReaders(deviceType, method) {
+    RNStripeTerminal.discoverReaders(deviceType, method);
+  }
+
+  checkForReaderSoftwareUpdate() {
+    RNStripeTerminal.checkForReaderSoftwareUpdate();
+  }
+
   connectReader(serialNumber) {
     return this._wrapPromiseReturn('readerConnection', () => {
       RNStripeTerminal.connectReader(serialNumber);
     });
-  }
-
-  createPaymentIntent(options) {
-    return this._wrapPromiseReturn('paymentIntentCreation', () => {
-      RNStripeTerminal.createPaymentIntent(options);
-    }, 'intent');
   }
 
   getConnectedReader() {
@@ -121,11 +108,18 @@ class StripeTerminal {
     }).then(data => data.serialNumber ? data : null);
   }
 
-  abortCreatePaymentIntent() {
-    RNStripeTerminal.abortCreatePaymentIntent();
+  createPayment(options) {
+    return this._wrapPromiseReturn('paymentCreation', () => {
+      RNStripeTerminal.createPayment(options);
+    }, 'intent');
+  }
+
+  abortCreatePayment() {
+    RNStripeTerminal.abortCreatePayment();
   }
 }
 
-const StripeTerminal_ = new StripeTerminal();
-
-export default StripeTerminal_;
+export default const StripeTerminal_ = new StripeTerminal();
+export const useStripeTerminalState = useStripeTerminalState.bind(StripeTerminal_);
+export const useStripeTerminalConnectReader = useStripeTerminalConnectReader.bind(StripeTerminal_);
+export const useStripeTerminalCreatePayment = useStripeTerminalCreatePayment.bind(StripeTerminal_);
