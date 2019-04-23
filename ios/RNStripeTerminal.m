@@ -1,6 +1,11 @@
 #import "RNStripeTerminal.h"
 #import <React/RCTConvert.h>
+
+#if __has_include(<StripeTerminal/StripeTerminal.h>)
 #import <StripeTerminal/StripeTerminal.h>
+#else
+#import "StripeTerminal.h"
+#endif
 
 @implementation RNStripeTerminal
 
@@ -18,8 +23,11 @@ static dispatch_once_t onceToken = 0;
 
 - (NSArray<NSString *> *)supportedEvents {
     return @[
+             @"log",
              @"requestConnectionToken",
              @"readersDiscovered",
+             @"readerDiscoveryCompletion",
+             @"readerDisconnectCompletion",
              @"readerConnection",
              @"paymentCreation",
              @"didBeginWaitingForReaderInput",
@@ -28,7 +36,12 @@ static dispatch_once_t onceToken = 0;
              @"didChangePaymentStatus",
              @"didChangeConnectionStatus",
              @"didDisconnectUnexpectedlyFromReader",
-             @"connectedReader"
+             @"connectedReader",
+             @"connectionStatus",
+             @"paymentStatus",
+             @"lastReaderEvent",
+             @"abortCreatePaymentCompletion",
+             @"abortDiscoverReadersCompletion"
              ];
 }
 
@@ -71,15 +84,18 @@ static dispatch_once_t onceToken = 0;
     
     NSMutableArray *data = [NSMutableArray arrayWithCapacity:[readers count]];
     [readers enumerateObjectsUsingBlock:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
-        [data addObject:@{
-                          @"batteryLevel": reader.batteryLevel ? reader.batteryLevel : @(0),
-                          @"deviceType": reader.deviceType ? @(reader.deviceType) : @(-1),
-                          @"serialNumber": reader.serialNumber ? reader.serialNumber : @"",
-                          @"deviceSoftwareVersion": reader.deviceSoftwareVersion ? reader.deviceSoftwareVersion : @""
-                          }];
+        [data addObject:[self serializeReader:reader]];
     }];
     
     [self sendEventWithName:@"readersDiscovered" body:data];
+}
+
+- (void)onLogEntry:(NSString * _Nonnull) logline {
+    if (self.bridge == nil) {
+        return;
+    }
+
+    [self sendEventWithName:@"log" body:logline];
 }
 
 RCT_EXPORT_METHOD(setConnectionToken:(NSString *)token error:(NSString *)errorMessage) {
@@ -98,20 +114,40 @@ RCT_EXPORT_METHOD(setConnectionToken:(NSString *)token error:(NSString *)errorMe
 RCT_EXPORT_METHOD(initialize) {
     dispatch_once(&onceToken, ^{
         [SCPTerminal setTokenProvider:self];
-        SCPTerminal.shared.delegate = self;
     });
+    
+    SCPTerminal.shared.delegate = self;
+    [SCPTerminal setLogListener:^(NSString * _Nonnull logline) {
+        [self onLogEntry:logline];
+    }];
     SCPTerminal.shared.logLevel = SCPLogLevelVerbose;
+
+    // When the React module is initialized, abort any pending calls that may not have been
+    // cleaned up from a previous initialization (e.g., due to hot reloading).
+    [self abortDiscoverReaders];
+    [self abortCreatePayment];
+
+    // When the module is initialized, assume the card has been removed.
+    lastReaderEvent = SCPReaderEventCardRemoved;
 }
 
 RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)deviceType method:(NSInteger *)method) {
+    // Attempt to abort any pending discoverReader calls first.
+    [self abortDiscoverReaders];
+
     SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDeviceType:(SCPDeviceType)deviceType method:(SCPDiscoveryMethod)method];
-    [SCPTerminal.shared discoverReaders:config delegate:self completion:^(NSError * _Nullable error) {
-        // fixme: add handler for discovery error?
+    pendingDiscoverReaders = [SCPTerminal.shared discoverReaders:config delegate:self completion:^(NSError * _Nullable error) {
+        pendingDiscoverReaders = nil;
+        if (error) {
+            [self sendEventWithName:@"readerDiscoveryCompletion" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"readerDiscoveryCompletion" body:@{}];
+        }
     }];
 }
 
 RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
-    unsigned int readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
+    unsigned long readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
     
@@ -120,9 +156,18 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
         if (error) {
             [self sendEventWithName:@"readerConnection" body:@{@"error": [error localizedDescription]}];
         } else {
-            [self sendEventWithName:@"readerConnection" body:@{}];
+            [self sendEventWithName:@"readerConnection" body:[self serializeReader:reader]];
         }
     }];
+}
+
+- (NSDictionary *)serializeReader:(SCPReader *)reader {
+    return @{
+             @"batteryLevel": reader.batteryLevel ? reader.batteryLevel : @(0),
+             @"deviceType": @(reader.deviceType),
+             @"serialNumber": reader.serialNumber ? reader.serialNumber : @"",
+             @"deviceSoftwareVersion": reader.deviceSoftwareVersion ? reader.deviceSoftwareVersion : @""
+             };
 }
 
 - (NSDictionary *)serializePaymentIntent:(SCPPaymentIntent *)intent {
@@ -139,27 +184,32 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
 RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
     void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
         if (creationError) {
-            [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [creationError localizedDescription]}];
+            [self sendEventWithName:@"paymentCreation" body:@{
+                                                              @"error": [creationError localizedDescription],
+                                                              @"code": @(creationError.code)
+                                                              }];
             
         } else {
             pendingCreatePaymentIntent = [SCPTerminal.shared collectPaymentMethod:intent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
                 pendingCreatePaymentIntent = nil;
                 if (collectionError) {
-                    [self sendEventWithName:@"paymentIntentCreation" body:@{
+                    [self sendEventWithName:@"paymentCreation" body:@{
                                                                             @"error": [collectionError localizedDescription],
+                                                                            @"code": @(collectionError.code),
                                                                             @"intent": [self serializePaymentIntent:intent]
                                                                             }];
                     
                 } else {
                     [SCPTerminal.shared confirmPaymentIntent:collectedIntent completion:^(SCPPaymentIntent * _Nullable confirmedIntent, SCPConfirmError * _Nullable confirmationError) {
                         if (confirmationError) {
-                            [self sendEventWithName:@"paymentIntentCreation" body:@{
+                            [self sendEventWithName:@"paymentCreation" body:@{
                                                                                     @"error": [confirmationError localizedDescription],
+                                                                                    @"code": @(confirmationError.code),
                                                                                     @"intent": [self serializePaymentIntent:collectedIntent]
                                                                                     }];
                             
                         } else {
-                            [self sendEventWithName:@"paymentIntentCreation" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
+                            [self sendEventWithName:@"paymentCreation" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
                         }
                     }];
                 }
@@ -182,7 +232,7 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
         if (applicationFeeAmount) {
             params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
         }
-        
+
         [SCPTerminal.shared createPaymentIntent:params completion:onIntent];
     }
 }
@@ -202,6 +252,7 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didReportReaderEvent:(SCPReaderEvent)event info:(NSDictionary *)info {
+    lastReaderEvent = event;
     [self sendEventWithName:@"didReportReaderEvent" body:
      @{
        @"event": @(event)
@@ -223,10 +274,7 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didDisconnectUnexpectedlyFromReader:(SCPReader *)reader {
-    [self sendEventWithName:@"didDisconnectUnexpectedlyFromReader" body:
-     @{
-       @"serialNumber": reader.serialNumber
-       }];
+    [self sendEventWithName:@"didDisconnectUnexpectedlyFromReader" body:[self serializeReader:reader]];
 }
 
 RCT_EXPORT_METHOD(clearCachedCredentials) {
@@ -234,25 +282,71 @@ RCT_EXPORT_METHOD(clearCachedCredentials) {
 }
 
 RCT_EXPORT_METHOD(disconnectReader) {
+    if (!SCPTerminal.shared.connectedReader) {
+        // No reader connected => "success"
+        [self sendEventWithName:@"readerDisconnectCompletion" body:@{}];
+        return;
+    }
+
     [SCPTerminal.shared disconnectReader:^(NSError * _Nullable error) {
-        // fall through
+        if (error) {
+            [self sendEventWithName:@"readerDisconnectCompletion" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"readerDisconnectCompletion" body:@{}];
+        }
     }];
 }
 
 RCT_EXPORT_METHOD(getConnectedReader) {
     SCPReader *reader = SCPTerminal.shared.connectedReader;
     [self sendEventWithName:@"connectedReader" body:
-     reader ? @{ @"serialNumber": reader.serialNumber } : @{}];
+     reader ? [self serializeReader:reader] : @{}];
 }
 
 RCT_EXPORT_METHOD(abortCreatePayment) {
     if (pendingCreatePaymentIntent) {
         [pendingCreatePaymentIntent cancel:^(NSError * _Nullable error) {
-            if (!error) {
+            if (error) {
+                [self sendEventWithName:@"abortCreatePaymentCompletion" body:@{@"error": [error localizedDescription]}];
+            } else {
                 pendingCreatePaymentIntent = nil;
+                [self sendEventWithName:@"abortCreatePaymentCompletion" body:@{}];
             }
         }];
+        return;
     }
+    
+    [self sendEventWithName:@"abortCreatePaymentCompletion" body:@{}];
+}
+
+RCT_EXPORT_METHOD(abortDiscoverReaders) {
+    if (pendingDiscoverReaders) {
+        [pendingDiscoverReaders cancel:^(NSError * _Nullable error) {
+            if (error) {
+                [self sendEventWithName:@"abortDiscoverReadersCompletion" body:@{@"error": [error localizedDescription]}];
+            } else {
+                pendingDiscoverReaders = nil;
+                [self sendEventWithName:@"abortDiscoverReadersCompletion" body:@{}];
+            }
+        }];
+        return;
+    }
+    
+    [self sendEventWithName:@"abortDiscoverReadersCompletion" body:@{}];
+}
+
+RCT_EXPORT_METHOD(getConnectionStatus) {
+    SCPConnectionStatus status = SCPTerminal.shared.connectionStatus;
+    [self sendEventWithName:@"connectionStatus" body:@(status)];
+}
+
+RCT_EXPORT_METHOD(getPaymentStatus) {
+    SCPPaymentStatus status = SCPTerminal.shared.paymentStatus;
+    [self sendEventWithName:@"paymentStatus" body:@(status)];
+}
+
+RCT_EXPORT_METHOD(getLastReaderEvent) {
+    [self sendEventWithName:@"lastReaderEvent" body:@(lastReaderEvent)];
 }
 
 RCT_EXPORT_MODULE()

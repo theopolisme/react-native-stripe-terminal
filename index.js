@@ -1,7 +1,6 @@
 import { NativeModules, NativeEventEmitter } from 'react-native';
-import { useStripeTerminalState,
-         useStripeTerminalConnectReader,
-         useStripeTerminalCreatePayment } from './hooks';
+import createHooks from './hooks';
+import createConnectionService from './connectionService';
 
 const { RNStripeTerminal } = NativeModules;
 
@@ -45,12 +44,18 @@ class StripeTerminal {
 
     this.listener.addListener('requestConnectionToken', () => {
       this._fetchConnectionToken()
-        .then(token => RNStripeTerminal.setConnectionToken(token, null))
-        .catch(err => RNStripeTerminal.setConnectionToken(null, err));
+        .then(token => {
+          if (token) {
+            RNStripeTerminal.setConnectionToken(token, null);
+          } else {
+            throw new Error('User-supplied `fetchConnectionToken` resolved successfully, but no token was returned.');
+          }
+        })
+        .catch(err => RNStripeTerminal.setConnectionToken(null, err || 'Error in user-supplied `fetchConnectionToken`.'));
     });
 
     this._createListeners([
-      'logEvent',
+      'log',
       'readersDiscovered',
       'didBeginWaitingForReaderInput',
       'didRequestReaderInputPrompt',
@@ -62,16 +67,15 @@ class StripeTerminal {
   }
 
   _createListeners(keys) {
-    for (const k in keys) {
-      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = \
-        (listener) => this.listener.addListener(k, listener);
-    }
+    keys.forEach(k => {
+      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = (listener) => this.listener.addListener(k, listener);
+    });
   }
 
   _wrapPromiseReturn(event, call, key) {
     return new Promise((resolve, reject) => {
       const subscription = this.listener.addListener(event, data => {
-        if (data.error) {
+        if (data && data.error) {
           reject(data);
         } else {
           resolve(key ? data[key] : data);
@@ -89,7 +93,9 @@ class StripeTerminal {
   }
 
   discoverReaders(deviceType, method) {
-    RNStripeTerminal.discoverReaders(deviceType, method);
+    return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
+      RNStripeTerminal.discoverReaders(deviceType, method);
+    });
   }
 
   checkForReaderSoftwareUpdate() {
@@ -102,10 +108,34 @@ class StripeTerminal {
     });
   }
 
+  disconnectReader() {
+    return this._wrapPromiseReturn('readerDisconnectCompletion', () => {
+      RNStripeTerminal.disconnectReader();
+    });
+  }
+
   getConnectedReader() {
     return this._wrapPromiseReturn('connectedReader', () => {
       RNStripeTerminal.getConnectedReader();
     }).then(data => data.serialNumber ? data : null);
+  }
+
+  getConnectionStatus() {
+    return this._wrapPromiseReturn('connectionStatus', () => {
+      RNStripeTerminal.getConnectionStatus();
+    });
+  }
+
+  getPaymentStatus() {
+    return this._wrapPromiseReturn('paymentStatus', () => {
+      RNStripeTerminal.getPaymentStatus();
+    });
+  }
+
+  getLastReaderEvent() {
+    return this._wrapPromiseReturn('lastReaderEvent', () => {
+      RNStripeTerminal.getLastReaderEvent();
+    });
   }
 
   createPayment(options) {
@@ -115,11 +145,46 @@ class StripeTerminal {
   }
 
   abortCreatePayment() {
-    RNStripeTerminal.abortCreatePayment();
+    return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
+      RNStripeTerminal.abortCreatePayment();
+    });
+  }
+
+  abortDiscoverReaders() {
+    return this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
+      RNStripeTerminal.abortDiscoverReaders();
+    });
+  }
+
+  startService(options) {
+    if (typeof options === 'string') {
+      options = { policy: options };
+    }
+
+    if (this._currentService) {
+      return Promise.reject('A service is already running. You must stop it using `stopService` before starting a new service.');
+    }
+
+    this._currentService = createConnectionService(this, options);
+    this._currentService.start();
+    return this._currentService;
+  }
+
+  stopService() {
+    if (!this._currentService) {
+      return Promise.resolve();
+    }
+
+    return this._currentService.stop().then(() => {
+      this._currentService = null;
+    });
   }
 }
 
-export default const StripeTerminal_ = new StripeTerminal();
-export const useStripeTerminalState = useStripeTerminalState.bind(StripeTerminal_);
-export const useStripeTerminalConnectReader = useStripeTerminalConnectReader.bind(StripeTerminal_);
-export const useStripeTerminalCreatePayment = useStripeTerminalCreatePayment.bind(StripeTerminal_);
+const StripeTerminal_ = new StripeTerminal();
+export default StripeTerminal_;
+
+export const {
+  useStripeTerminalState,
+  useStripeTerminalCreatePayment
+} = createHooks(StripeTerminal_);
