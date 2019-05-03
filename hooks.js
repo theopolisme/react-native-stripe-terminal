@@ -43,32 +43,68 @@ export default function createHooks(StripeTerminal) {
       paymentStatus,
       readerInputOptions,
       readerInputPrompt,
-      cardInserted
+      cardInserted,
+      clearReaderInputState: () => {
+        setReaderInputOptions(null);
+        setReaderInputPrompt(null);
+      }
     };
   }
 
-  function useStripeTerminalCreatePayment({ onSuccess, onFailure, ...options }) {
+  function useStripeTerminalCreatePayment({ onSuccess, onFailure, onCapture, autoRetry, ...options }) {
     const {
       connectionStatus,
       connectedReader,
       paymentStatus,
       cardInserted,
       readerInputOptions,
-      readerInputPrompt
+      readerInputPrompt,
+      clearReaderInputState
     } = state = useStripeTerminalState();
 
     const [hasCreatedPayment, setHasCreatedPayment] = useState(false);
+    const [isCaptured, setIsCaptured] = useState(false);
     const [isCompleted, setIsCompleted] = useState(false);
+    const [readerError, setReaderError] = useState(null);
+    const [hasRetried, setHasRetried] = useState(false);
 
     useEffect(() => {
-      if (paymentStatus === StripeTerminal.PaymentStatusReady && !hasCreatedPayment) {
+
+      if (paymentStatus !== StripeTerminal.PaymentStatusNotReady &&
+          (!hasCreatedPayment || (readerError && !hasRetried && !cardInserted))) {
+
         setHasCreatedPayment(true);
+        if (readerError) {
+          setHasRetried(true);
+        }
+
         StripeTerminal.createPayment(options)
-          .then(onSuccess)
-          .catch(onFailure)
+          .then(intent => {
+            if (onCapture) {
+              return onCapture(intent)
+                .then(onSuccess)
+                .catch(onFailure);
+            }
+
+            onSuccess(intent);
+          })
+          .catch(({ error }) => {
+            if (autoRetry) {
+              StripeTerminal.abortCreatePayment()
+                .then(() => {
+                  clearReaderInputState();
+                  setHasRetried(false);
+                  setReaderError(error);
+                })
+                .catch(e => onFailure(e));
+              return;
+            }
+
+            onFailure(error);
+          })
           .finally(() => setIsCompleted(true));
       }
-    }, [paymentStatus]);
+    }, [paymentStatus, hasCreatedPayment, readerError, hasRetried, cardInserted]);
 
     // Cleanup: abort if unmounted midway through payment intent creation process.
     useEffect(() => {
@@ -80,12 +116,69 @@ export default function createHooks(StripeTerminal) {
     }, []);
 
     return {
-      ...state
+      ...state,
+      readerError
+    };
+  }
+
+  const ConnectionManagerStatusConnected = 'connected';
+  const ConnectionManagerStatusConnecting = 'connecting';
+  const ConnectionManagerStatusDisconnected = 'disconnected';
+  const ConnectionManagerStatusScanning = 'scanning';
+
+  function useStripeTerminalConnectionManager({ service }) {
+    const {
+      connectionStatus,
+      connectedReader,
+      paymentStatus,
+    } = state = useStripeTerminalState();
+
+    const [managerConnectionStatus, setManagerConnectionStatus] = useState(ConnectionManagerStatusDisconnected);
+    const [readersAvailable, setReadersAvailable] = useState([]);
+    const [persistedReaderSerialNumber, setPersistedReaderSerialNumber] = useState(null);
+
+    useEffect(() => {
+      setManagerConnectionStatus(!!connectedReader ? ConnectionManagerStatusConnected : ConnectionManagerStatusDisconnected);
+    }, [connectedReader]);
+
+    useEffect(() => {
+      // Populate initial values
+      service.getPersistedReaderSerialNumber().then(s => setPersistedReaderSerialNumber(s));
+
+      // Setup listeners
+      const listeners = [
+        service.addListener('readersDiscovered', readers => setReadersAvailable(readers)),
+        service.addListener('readerPersisted', serialNumber => setPersistedReaderSerialNumber(serialNumber))
+      ];
+
+      // Cleanup: remove listeners
+      return () => {
+        listeners.forEach(l => l.remove());
+      };
+    }, []);
+
+    return {
+      ...state,
+      managerConnectionStatus,
+      readersAvailable,
+      persistedReaderSerialNumber,
+      connectReader: (serialNumber) => {
+        setManagerConnectionStatus(ConnectionManagerStatusConnecting);
+        service.connect(serialNumber);
+      },
+      discoverReaders: () => {
+        setManagerConnectionStatus(ConnectionManagerStatusScanning);
+        service.discover();
+      },
+      disconnectReader: () => {
+        service.disconnect();
+      }
     };
   }
 
   return {
     useStripeTerminalState,
-    useStripeTerminalCreatePayment
+    useStripeTerminalCreatePayment,
+    useStripeTerminalConnectionManager
   };
 }

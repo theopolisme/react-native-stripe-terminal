@@ -5,19 +5,22 @@ import createConnectionService from './connectionService';
 const { RNStripeTerminal } = NativeModules;
 
 class StripeTerminal {
-
   // Device types
   DeviceTypeChipper2X = RNStripeTerminal.DeviceTypeChipper2X;
   DeviceTypeReaderSimulator = RNStripeTerminal.DeviceTypeReaderSimulator;
 
   // Discovery methods
   DiscoveryMethodBluetoothScan = RNStripeTerminal.DiscoveryMethodBluetoothScan;
-  DiscoveryMethodBluetoothProximity = RNStripeTerminal.DiscoveryMethodBluetoothProximity;
+  DiscoveryMethodBluetoothProximity =
+    RNStripeTerminal.DiscoveryMethodBluetoothProximity;
 
   // Payment intent statuses
-  PaymentIntentStatusRequiresSource = RNStripeTerminal.PaymentIntentStatusRequiresSource;
-  PaymentIntentStatusRequiresConfirmation = RNStripeTerminal.PaymentIntentStatusRequiresConfirmation;
-  PaymentIntentStatusRequiresCapture = RNStripeTerminal.PaymentIntentStatusRequiresCapture;
+  PaymentIntentStatusRequiresSource =
+    RNStripeTerminal.PaymentIntentStatusRequiresSource;
+  PaymentIntentStatusRequiresConfirmation =
+    RNStripeTerminal.PaymentIntentStatusRequiresConfirmation;
+  PaymentIntentStatusRequiresCapture =
+    RNStripeTerminal.PaymentIntentStatusRequiresCapture;
   PaymentIntentStatusCanceled = RNStripeTerminal.PaymentIntentStatusCanceled;
   PaymentIntentStatusSucceeded = RNStripeTerminal.PaymentIntentStatusSucceeded;
 
@@ -28,8 +31,10 @@ class StripeTerminal {
   // Payment status
   PaymentStatusNotReady = RNStripeTerminal.PaymentStatusNotReady;
   PaymentStatusReady = RNStripeTerminal.PaymentStatusReady;
-  PaymentStatusCollectingPaymentMethod = RNStripeTerminal.PaymentStatusCollectingPaymentMethod;
-  PaymentStatusConfirmingPaymentIntent = RNStripeTerminal.PaymentStatusConfirmingPaymentIntent;
+  PaymentStatusCollectingPaymentMethod =
+    RNStripeTerminal.PaymentStatusCollectingPaymentMethod;
+  PaymentStatusConfirmingPaymentIntent =
+    RNStripeTerminal.PaymentStatusConfirmingPaymentIntent;
 
   // Connection status
   ConnectionStatusNotConnected = RNStripeTerminal.ConnectionStatusNotConnected;
@@ -37,7 +42,8 @@ class StripeTerminal {
   ConnectionStatusBusy = RNStripeTerminal.ConnectionStatusBusy;
 
   // Fetch connection token. Overwritten in call to initialize
-  _fetchConnectionToken = () => Promise.reject('You must initialize RNStripeTerminal first.');
+  _fetchConnectionToken = () =>
+    Promise.reject('You must initialize RNStripeTerminal first.');
 
   constructor() {
     this.listener = new NativeEventEmitter(RNStripeTerminal);
@@ -62,13 +68,14 @@ class StripeTerminal {
       'didReportReaderEvent',
       'didChangePaymentStatus',
       'didChangeConnectionStatus',
-      'didDisconnectUnexpectedlyFromReader'
-    ])
+      'didDisconnectUnexpectedlyFromReader',
+    ]);
   }
 
   _createListeners(keys) {
     keys.forEach(k => {
-      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = (listener) => this.listener.addListener(k, listener);
+      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = listener =>
+        this.listener.addListener(k, listener);
     });
   }
 
@@ -117,7 +124,7 @@ class StripeTerminal {
   getConnectedReader() {
     return this._wrapPromiseReturn('connectedReader', () => {
       RNStripeTerminal.getConnectedReader();
-    }).then(data => data.serialNumber ? data : null);
+    }).then(data => (data.serialNumber ? data : null));
   }
 
   getConnectionStatus() {
@@ -139,9 +146,13 @@ class StripeTerminal {
   }
 
   createPayment(options) {
-    return this._wrapPromiseReturn('paymentCreation', () => {
-      RNStripeTerminal.createPayment(options);
-    }, 'intent');
+    return this._wrapPromiseReturn(
+      'paymentCreation',
+      () => {
+        RNStripeTerminal.createPayment(options);
+      },
+      'intent',
+    );
   }
 
   abortCreatePayment() {
@@ -162,7 +173,9 @@ class StripeTerminal {
     }
 
     if (this._currentService) {
-      return Promise.reject('A service is already running. You must stop it using `stopService` before starting a new service.');
+      return Promise.reject(
+        'A service is already running. You must stop it using `stopService` before starting a new service.',
+      );
     }
 
     this._currentService = createConnectionService(this, options);
@@ -186,5 +199,6 @@ export default StripeTerminal_;
 
 export const {
   useStripeTerminalState,
-  useStripeTerminalCreatePayment
+  useStripeTerminalCreatePayment,
+  useStripeTerminalConnectionManager,
 } = createHooks(StripeTerminal_);
