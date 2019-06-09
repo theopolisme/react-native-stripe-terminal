@@ -239,7 +239,7 @@
 					"$(SRCROOT)/../Example/ios/Pods/Headers/Public/StripeTerminal",
 					"$(SRCROOT)/../Example/node_modules/react-native/React",
 					"$(SRCROOT)/../Example/ios/Pods",
-					"/Users/theopatt/Documents/Projects/pos-dev/app/ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
+					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
@@ -260,7 +260,7 @@
 					"$(SRCROOT)/../Example/ios/Pods/Headers/Public/StripeTerminal",
 					"$(SRCROOT)/../Example/node_modules/react-native/React",
 					"$(SRCROOT)/../Example/ios/Pods",
-					"/Users/theopatt/Documents/Projects/pos-dev/app/ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
+					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
