@@ -7,7 +7,6 @@ const { RNStripeTerminal } = NativeModules;
 class StripeTerminal {
   // Device types
   DeviceTypeChipper2X = RNStripeTerminal.DeviceTypeChipper2X;
-  DeviceTypeReaderSimulator = RNStripeTerminal.DeviceTypeReaderSimulator;
 
   // Discovery methods
   DiscoveryMethodBluetoothScan = RNStripeTerminal.DiscoveryMethodBluetoothScan;
@@ -15,8 +14,8 @@ class StripeTerminal {
     RNStripeTerminal.DiscoveryMethodBluetoothProximity;
 
   // Payment intent statuses
-  PaymentIntentStatusRequiresSource =
-    RNStripeTerminal.PaymentIntentStatusRequiresSource;
+  PaymentIntentStatusRequiresPaymentMethod =
+    RNStripeTerminal.PaymentIntentStatusRequiresPaymentMethod;
   PaymentIntentStatusRequiresConfirmation =
     RNStripeTerminal.PaymentIntentStatusRequiresConfirmation;
   PaymentIntentStatusRequiresCapture =
@@ -31,15 +30,15 @@ class StripeTerminal {
   // Payment status
   PaymentStatusNotReady = RNStripeTerminal.PaymentStatusNotReady;
   PaymentStatusReady = RNStripeTerminal.PaymentStatusReady;
-  PaymentStatusCollectingPaymentMethod =
-    RNStripeTerminal.PaymentStatusCollectingPaymentMethod;
-  PaymentStatusConfirmingPaymentIntent =
-    RNStripeTerminal.PaymentStatusConfirmingPaymentIntent;
+  PaymentStatusWaitingForInput =
+    RNStripeTerminal.PaymentStatusWaitingForInput;
+  PaymentStatusProcessing =
+    RNStripeTerminal.PaymentStatusProcessing;
 
   // Connection status
   ConnectionStatusNotConnected = RNStripeTerminal.ConnectionStatusNotConnected;
   ConnectionStatusConnected = RNStripeTerminal.ConnectionStatusConnected;
-  ConnectionStatusBusy = RNStripeTerminal.ConnectionStatusBusy;
+  ConnectionStatusConnecting = RNStripeTerminal.ConnectionStatusConnecting;
 
   // Fetch connection token. Overwritten in call to initialize
   _fetchConnectionToken = () =>
@@ -63,12 +62,14 @@ class StripeTerminal {
     this._createListeners([
       'log',
       'readersDiscovered',
-      'didBeginWaitingForReaderInput',
-      'didRequestReaderInputPrompt',
+      'readerSoftwareUpdateProgress',
+      'didRequestReaderInput',
+      'didRequestReaderDisplayMessage',
       'didReportReaderEvent',
+      'didReportLowBatteryWarning',
       'didChangePaymentStatus',
       'didChangeConnectionStatus',
-      'didDisconnectUnexpectedlyFromReader',
+      'didReportUnexpectedReaderDisconnect',
     ]);
   }
 
@@ -76,6 +77,8 @@ class StripeTerminal {
     keys.forEach(k => {
       this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = listener =>
         this.listener.addListener(k, listener);
+      this[`remove${k[0].toUpperCase() + k.substring(1)}Listener`] = listener =>
+        this.listener.removeListener(k, listener);
     });
   }
 
@@ -99,14 +102,22 @@ class StripeTerminal {
     RNStripeTerminal.initialize();
   }
 
-  discoverReaders(deviceType, method) {
+  discoverReaders(deviceType, method, simulated) {
     return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
-      RNStripeTerminal.discoverReaders(deviceType, method);
+      RNStripeTerminal.discoverReaders(deviceType, method, simulated);
     });
   }
 
-  checkForReaderSoftwareUpdate() {
-    RNStripeTerminal.checkForReaderSoftwareUpdate();
+  checkForUpdate() {
+    return this._wrapPromiseReturn('updateCheck', () => {
+      RNStripeTerminal.checkForUpdate();
+    }, 'update')
+  }
+
+  installUpdate() {
+    return this._wrapPromiseReturn('updateInstall', () => {
+      RNStripeTerminal.installUpdate();
+    })
   }
 
   connectReader(serialNumber) {
@@ -155,6 +166,56 @@ class StripeTerminal {
     );
   }
 
+  createPaymentIntent(options) {
+    return this._wrapPromiseReturn(
+      'paymentIntentCreation',
+      () => {
+        RNStripeTerminal.createPaymentIntent(options);
+      },
+      'intent'
+    );
+  }
+
+  retrievePaymentIntent(clientSecret) {
+    return this._wrapPromiseReturn(
+      'paymentIntentRetrieval',
+      () => {
+        RNStripeTerminal.retrievePaymentIntent(clientSecret);
+      },
+      'intent'
+    );
+  }
+
+  collectPaymentMethod() {
+    return this._wrapPromiseReturn(
+      'paymentMethodCollection',
+      () => {
+        RNStripeTerminal.collectPaymentMethod();
+      },
+      'intent'
+    );
+  }
+
+  processPayment() {
+    return this._wrapPromiseReturn(
+      'paymentProcess',
+      () => {
+        RNStripeTerminal.processPayment();
+      },
+      'intent'
+    );
+  }
+
+  cancelPaymentIntent() {
+    return this._wrapPromiseReturn(
+      'paymentIntentCancel',
+      () => {
+        RNStripeTerminal.cancelPaymentIntent();
+      },
+      'intent'
+    );
+  }
+
   abortCreatePayment() {
     return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
       RNStripeTerminal.abortCreatePayment();
@@ -165,6 +226,12 @@ class StripeTerminal {
     return this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
       RNStripeTerminal.abortDiscoverReaders();
     });
+  }
+
+  abortInstallUpdate() {
+    return this._wrapPromiseReturn('abortInstallUpdateCompletion', () => {
+      RNStripeTerminal.abortInstallUpdate();
+    })
   }
 
   startService(options) {
