@@ -43,6 +43,7 @@ static dispatch_once_t onceToken = 0;
              @"didRequestReaderDisplayMessage",
              @"didReportReaderEvent",
              @"didReportUnexpectedReaderDisconnect",
+             @"didReportLowBatteryWarning",
              @"didChangePaymentStatus",
              @"didChangeConnectionStatus",
              @"didDisconnectUnexpectedlyFromReader",
