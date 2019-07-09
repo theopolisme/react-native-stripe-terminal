@@ -12,12 +12,15 @@
 #import "StripeTerminal.h"
 #endif
 
-@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPReaderInputDelegate, SCPTerminalDelegate> {
+@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPReaderDisplayDelegate, SCPTerminalDelegate, SCPReaderSoftwareUpdateDelegate> {
 
     NSArray<SCPReader *> *readers;
     SCPReader *reader;
+    SCPPaymentIntent *intent;
+    SCPReaderSoftwareUpdate *update;
     SCPCancelable *pendingCreatePaymentIntent;
     SCPCancelable *pendingDiscoverReaders;
+    SCPCancelable *pendingInstallUpdate;
     SCPConnectionTokenCompletionBlock pendingConnectionTokenCompletionBlock;
     SCPReaderEvent lastReaderEvent;
 }
