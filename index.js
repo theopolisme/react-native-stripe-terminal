@@ -56,7 +56,7 @@ class StripeTerminal {
             throw new Error('User-supplied `fetchConnectionToken` resolved successfully, but no token was returned.');
           }
         })
-        .catch(err => RNStripeTerminal.setConnectionToken(null, err || 'Error in user-supplied `fetchConnectionToken`.'));
+        .catch(err => RNStripeTerminal.setConnectionToken(null, err.message || 'Error in user-supplied `fetchConnectionToken`.'));
     });
 
     this._createListeners([
