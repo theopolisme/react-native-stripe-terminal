@@ -54,8 +54,8 @@
 		4885223A2267CC8E006FD798 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				4885223D2267CCC9006FD798 /* StripeTerminal.framework */,
 				4885223B2267CC8E006FD798 /* Pods_kiosk.framework */,
+				4885223D2267CCC9006FD798 /* StripeTerminal.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -240,6 +240,7 @@
 					"$(SRCROOT)/../Example/node_modules/react-native/React",
 					"$(SRCROOT)/../Example/ios/Pods",
 					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
+					"$(SRCROOT)/../../../ios/Pods/Headers/Public/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
@@ -261,6 +262,7 @@
 					"$(SRCROOT)/../Example/node_modules/react-native/React",
 					"$(SRCROOT)/../Example/ios/Pods",
 					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
+					"$(SRCROOT)/../../../ios/Pods/Headers/Public/**",
 				);
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
