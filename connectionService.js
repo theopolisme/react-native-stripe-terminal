@@ -1,4 +1,4 @@
-import EventEmitter from "EventEmitter";
+import EventEmitter from "eventemitter3";
 import { AsyncStorage } from "react-native";
 
 export default function createConnectionService(StripeTerminal, options) {
@@ -45,7 +45,7 @@ export default function createConnectionService(StripeTerminal, options) {
         StripeTerminal.addReadersDiscoveredListener(
           this.onReadersDiscovered.bind(this)
         ),
-        StripeTerminal.addDidDisconnectUnexpectedlyFromReaderListener(
+        StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
           this.onUnexpectedDisconnect.bind(this)
         )
       ];
