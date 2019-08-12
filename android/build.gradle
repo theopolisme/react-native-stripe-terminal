@@ -1,0 +1,55 @@
+buildscript {
+  repositories {
+    google()
+    maven {
+      url 'https://maven.google.com/'
+      name 'Google'
+    }
+    jcenter()
+  }
+
+  dependencies {
+    classpath 'com.android.tools.build:gradle:3.4.2'
+  }
+}
+
+apply plugin: 'com.android.library'
+
+def safeExtGet(prop, fallback) {
+  rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+}
+
+android {
+  compileSdkVersion safeExtGet("compileSdkVersion",28)
+  buildToolsVersion safeExtGet("buildToolsVersion","28.0.3")
+
+  defaultConfig {
+    minSdkVersion 21
+    targetSdkVersion safeExtGet("targetSdkVersion",28)
+    versionCode 1
+    versionName "1.0"
+  }
+  lintOptions {
+    abortOnError false
+  }
+
+  buildTypes{
+    debug{
+      buildConfigField "boolean", "isLoggingEnabled", "true"
+    }
+
+    release{
+      buildConfigField "boolean", "isLoggingEnabled", "false"
+    }
+  }
+}
+
+repositories {
+  google()
+  mavenCentral()
+}
+
+dependencies {
+  implementation "com.facebook.react:react-native:+"
+  implementation "com.stripe:stripeterminal:1.0.0-b7"
+}
