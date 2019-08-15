@@ -4,6 +4,7 @@ import android.net.wifi.aware.DiscoverySession;
 
 import com.stripe.stripeterminal.ConnectionStatus;
 import com.stripe.stripeterminal.DeviceType;
+import com.stripe.stripeterminal.PaymentIntent;
 import com.stripe.stripeterminal.PaymentStatus;
 import com.stripe.stripeterminal.ReaderEvent;
 
@@ -79,11 +80,11 @@ public class Constants {
         constants.put("DeviceTypeChipper2X", DeviceType.CHIPPER_2X.ordinal());
         constants.put("DiscoveryMethodBluetoothScan",0);               //Not applicable for Android SDK
         constants.put("DiscoveryMethodBluetoothProximity",0);          //Not applicable for Android SDK
-        constants.put("PaymentIntentStatusRequiresPaymentMethod","");
-        constants.put("PaymentIntentStatusRequiresConfirmation","");
-        constants.put("PaymentIntentStatusRequiresCapture","");
-        constants.put("PaymentIntentStatusCanceled","");
-        constants.put("PaymentIntentStatusSucceeded","");
+        constants.put("PaymentIntentStatusRequiresPaymentMethod", PaymentIntent.PaymentIntentStatus.REQUIRES_PAYMENT_METHOD.ordinal());
+        constants.put("PaymentIntentStatusRequiresConfirmation", PaymentIntent.PaymentIntentStatus.REQUIRES_CONFIRMATION.ordinal());
+        constants.put("PaymentIntentStatusRequiresCapture", PaymentIntent.PaymentIntentStatus.REQUIRES_CAPTURE.ordinal());
+        constants.put("PaymentIntentStatusCanceled", PaymentIntent.PaymentIntentStatus.CANCELED.ordinal());
+        constants.put("PaymentIntentStatusSucceeded", 4);  //Value not present in android
         constants.put("ReaderEventCardInserted", ReaderEvent.CARD_INSERTED.ordinal());
         constants.put("ReaderEventCardRemoved",ReaderEvent.CARD_REMOVED.ordinal());
         constants.put("PaymentStatusNotReady", PaymentStatus.NOT_READY.ordinal());
