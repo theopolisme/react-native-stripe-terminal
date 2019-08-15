@@ -20,9 +20,13 @@ public class Constants {
     public static final String EVENT_DID_REPORT_READER_EVENT = "didReportReaderEvent";
     public static final String EVENT_DID_REPORT_UNEXPECTED_READER_DISCONNECT="didReportUnexpectedReaderDisconnect";
     public static final String EVENT_DID_CHANGE_PAYMENT_STATUS = "didChangePaymentStatus";
+    public static final String EVENT_PAYMENT_CREATION = "paymentCreation";
+    public static final String EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE = "didRequestReaderDisplayMessage";
+    public static final String EVENT_DID_REQUEST_READER_INPUT = "didRequestReaderInput";
 
     //JSON keys
-    public static final String ERROR="error";
+    public static final String ERROR ="error";
+    public static final String CODE="code";
     public static final String BATTERY_LEVEL = "batteryLevel";
     public static final String DEVICE_TYPE = "deviceType";
     public static final String SERIAL_NUMBER = "serialNumber";
@@ -30,6 +34,15 @@ public class Constants {
     public static final String STATUS = "status";
     public static final String EVENT = "event";
     public static final String INFO = "info";
+    public static final String PAYMENT_INTENT ="paymentIntent";
+    public static final String AMOUNT = "amount";
+    public static final String CURRENCY =  "currency";
+    public static final String APPLICATION_FEE_AMOUNT = "applicationFeeAmount";
+    public static final String TEXT="text";
+    public static final String STRIPE_ID = "stripeId";
+    public static final String CREATED = "created";
+    public static final String METADATA ="metadata";
+    public static final String INTENT="intent";
 
     //Put constants
 

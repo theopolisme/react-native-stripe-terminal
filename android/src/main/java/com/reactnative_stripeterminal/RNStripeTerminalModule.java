@@ -1,12 +1,11 @@
 package com.reactnative_stripeterminal;
 
-import android.telecom.Call;
-
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
+import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -20,13 +19,21 @@ import com.stripe.stripeterminal.DeviceType;
 import com.stripe.stripeterminal.DiscoveryConfiguration;
 import com.stripe.stripeterminal.DiscoveryListener;
 import com.stripe.stripeterminal.LogLevel;
+import com.stripe.stripeterminal.PaymentIntent;
+import com.stripe.stripeterminal.PaymentIntentCallback;
+import com.stripe.stripeterminal.PaymentIntentParameters;
 import com.stripe.stripeterminal.PaymentStatus;
 import com.stripe.stripeterminal.Reader;
+import com.stripe.stripeterminal.ReaderDisplayListener;
+import com.stripe.stripeterminal.ReaderDisplayMessage;
 import com.stripe.stripeterminal.ReaderEvent;
+import com.stripe.stripeterminal.ReaderInputOptions;
 import com.stripe.stripeterminal.Terminal;
 import com.stripe.stripeterminal.TerminalException;
 import com.stripe.stripeterminal.TerminalListener;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -35,12 +42,14 @@ import javax.annotation.Nullable;
 
 import static com.reactnative_stripeterminal.Constants.*;
 
-public class RNStripeTerminalModule extends ReactContextBaseJavaModule implements TerminalListener, ConnectionTokenProvider {
+public class RNStripeTerminalModule extends ReactContextBaseJavaModule implements TerminalListener, ConnectionTokenProvider, ReaderDisplayListener {
     final static String TAG = RNStripeTerminalModule.class.getSimpleName();
     final static String moduleName = "RNStripeTerminal";
     Cancelable lastDiscoverReaderAttempt = null;
+    Cancelable lastPaymentAttempt = null;
     ReaderEvent lastReaderEvent=ReaderEvent.CARD_REMOVED;
     ConnectionTokenCallback pendingConnectionTokenCallback = null;
+
 
     public RNStripeTerminalModule(ReactApplicationContext reactContext) {
         super(reactContext);
@@ -80,6 +89,24 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             writableMap.putString(DEVICE_SOFTWARE_VERSION, reader.getSoftwareVersion());
         }
         return writableMap;
+    }
+
+    WritableMap serializePaymentIntent(PaymentIntent paymentIntent,String currency){
+        WritableMap paymentIntentMap = Arguments.createMap();
+        paymentIntentMap.putString(STRIPE_ID,paymentIntent.getId());
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZZZ");
+        paymentIntentMap.putString(CREATED,simpleDateFormat.format(new Date(paymentIntent.getCreated())));
+        paymentIntentMap.putInt(STATUS,paymentIntent.getStatus().ordinal());
+        paymentIntentMap.putInt(AMOUNT,paymentIntent.getAmount());
+        paymentIntentMap.putString(CURRENCY,currency);
+        WritableMap metaDataMap = Arguments.createMap();
+        if(paymentIntent.getMetadata()!=null){
+            for(String key:paymentIntent.getMetadata().keySet()){
+                metaDataMap.putString(key,String.valueOf(paymentIntent.getMetadata().get(key)));
+            }
+        }
+        paymentIntentMap.putMap(METADATA,metaDataMap);
+        return paymentIntentMap;
     }
 
     void abortPreviousDiscoverReadersCall(){
@@ -175,12 +202,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         }
     }
 
-    @Override
-    public void fetchConnectionToken(@Nonnull ConnectionTokenCallback connectionTokenCallback) {
-        pendingConnectionTokenCallback = connectionTokenCallback;
-        sendEventWithName(EVENT_REQUEST_CONNECTION_TOKEN,Arguments.createMap());
-    }
-
     @ReactMethod
     public void setConnectionToken(String token,String errorMsg){
         if(pendingConnectionTokenCallback!=null){
@@ -192,6 +213,130 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         }
 
         pendingConnectionTokenCallback = null;
+    }
+
+    @ReactMethod
+    public void createPayment(final ReadableMap options) {
+        /**
+         * void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
+         *         if (creationError) {
+         *             [self sendEventWithName:@"paymentCreation" body:@{
+         *                                                               @"error": [creationError localizedDescription],
+         *                                                               @"code": @(creationError.code)
+         *                                                               }];
+         *
+         *         } else {
+         *             pendingCreatePaymentIntent = [SCPTerminal.shared collectPaymentMethod:intent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
+         *                 pendingCreatePaymentIntent = nil;
+         *                 if (collectionError) {
+         *                     [self sendEventWithName:@"paymentCreation" body:@{
+         *                                                                             @"error": [collectionError localizedDescription],
+         *                                                                             @"code": @(collectionError.code),
+         *                                                                             @"intent": [self serializePaymentIntent:intent]
+         *                                                                             }];
+         *
+         *                 } else {
+         *                     [SCPTerminal.shared processPayment:collectedIntent completion:^(SCPPaymentIntent * _Nullable confirmedIntent, SCPProcessPaymentError * _Nullable processError) {
+         *                         if (processError) {
+         *                             [self sendEventWithName:@"paymentCreation" body:@{
+         *                                                                                     @"error": [processError localizedDescription],
+         *                                                                                     @"code": @(processError.code),
+         *                                                                                     @"intent": [self serializePaymentIntent:collectedIntent]
+         *                                                                                     }];
+         *
+         *                         } else {
+         *                             [self sendEventWithName:@"paymentCreation" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
+         *                         }
+         *                     }];
+         *                 }
+         *             }];
+         *         }
+         *     };
+         *
+         * */
+
+        PaymentIntentCallback paymentIntentCallback = new PaymentIntentCallback() {
+            @Override
+            public void onSuccess(@Nonnull final PaymentIntent paymentIntent) {
+                lastPaymentAttempt = Terminal.getInstance().collectPaymentMethod(paymentIntent, RNStripeTerminalModule.this
+                        , new PaymentIntentCallback() {
+                    @Override
+                    public void onSuccess(@Nonnull final PaymentIntent collectedIntent) {
+                        lastPaymentAttempt = null;
+                        Terminal.getInstance().processPayment(collectedIntent, new PaymentIntentCallback() {
+                            @Override
+                            public void onSuccess(@Nonnull PaymentIntent confirmedIntent) {
+                                WritableMap intentMap = Arguments.createMap();
+                                String currency = "";
+                                if(options!=null && options.hasKey(CURRENCY)){
+                                    currency = options.getString(CURRENCY);
+                                }
+                                intentMap.putMap(INTENT,serializePaymentIntent(confirmedIntent,currency));
+                                sendEventWithName(EVENT_PAYMENT_CREATION,intentMap);
+                            }
+
+                            @Override
+                            public void onFailure(@Nonnull TerminalException e) {
+                                WritableMap errorMap = Arguments.createMap();
+                                errorMap.putString(ERROR,e.getErrorMessage());
+                                errorMap.putInt(CODE,e.getErrorCode().ordinal());
+                                String currency = "";
+                                if(options!=null && options.hasKey(CURRENCY)){
+                                    currency = options.getString(CURRENCY);
+                                }
+                                errorMap.putMap(INTENT,serializePaymentIntent(collectedIntent,currency));
+                                sendEventWithName(EVENT_PAYMENT_CREATION,errorMap);
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onFailure(@Nonnull TerminalException e) {
+                        lastPaymentAttempt = null;
+                         WritableMap collectionErrorMap = Arguments.createMap();
+                         collectionErrorMap.putString(ERROR,e.getErrorMessage());
+                         collectionErrorMap.putInt(CODE,e.getErrorCode().ordinal());
+                         String currency = "";
+                         if(options!=null && options.hasKey(CURRENCY)){
+                             currency = options.getString(CURRENCY);
+                         }
+                         collectionErrorMap.putMap(INTENT,serializePaymentIntent(paymentIntent,currency));
+                         sendEventWithName(EVENT_PAYMENT_CREATION,collectionErrorMap);
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(@Nonnull TerminalException e) {
+                WritableMap paymentCreationMap = Arguments.createMap();
+                paymentCreationMap.putString(ERROR, e.getErrorMessage());
+                paymentCreationMap.putInt(CODE, e.getErrorCode().ordinal());
+                sendEventWithName(EVENT_PAYMENT_CREATION,paymentCreationMap);
+            }
+        };
+
+        String paymentIntent = options.getString(PAYMENT_INTENT);
+        if(paymentIntent!=null && !paymentIntent.trim().isEmpty()){
+           Terminal.getInstance().retrievePaymentIntent(paymentIntent,paymentIntentCallback);
+        }else{
+            int amount = options.getInt(AMOUNT);
+            String currency = options.getString(CURRENCY);
+            PaymentIntentParameters.Builder paymentIntentParamBuilder = new PaymentIntentParameters.Builder();
+            paymentIntentParamBuilder.setAmount(amount);
+            paymentIntentParamBuilder.setCurrency(currency);
+            if(options.hasKey(APPLICATION_FEE_AMOUNT)) {
+                int applicationFeeAmount = options.getInt(APPLICATION_FEE_AMOUNT);
+                paymentIntentParamBuilder.setApplicationFeeAmount(applicationFeeAmount);
+            }
+
+            Terminal.getInstance().createPaymentIntent(paymentIntentParamBuilder.build(),paymentIntentCallback);
+        }
+    }
+
+    @Override
+    public void fetchConnectionToken(@Nonnull ConnectionTokenCallback connectionTokenCallback) {
+        pendingConnectionTokenCallback = connectionTokenCallback;
+        sendEventWithName(EVENT_REQUEST_CONNECTION_TOKEN,Arguments.createMap());
     }
 
     @Override
@@ -225,5 +370,19 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     @Override
     public void onUnexpectedReaderDisconnect(@Nonnull Reader reader) {
         sendEventWithName(EVENT_DID_REPORT_UNEXPECTED_READER_DISCONNECT,serializeReader(reader));
+    }
+
+    @Override
+    public void onRequestReaderInput(@Nonnull ReaderInputOptions readerInputOptions) {
+        WritableMap readerOptionsMap = Arguments.createMap();
+        readerOptionsMap.putString(TEXT,readerInputOptions.toString());
+        sendEventWithName(EVENT_DID_REQUEST_READER_INPUT,readerOptionsMap);
+    }
+
+    @Override
+    public void onRequestReaderDisplayMessage(@Nonnull ReaderDisplayMessage readerDisplayMessage) {
+        WritableMap displayMessageMap = Arguments.createMap();
+        displayMessageMap.putString(TEXT,readerDisplayMessage.toString());
+        sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE,displayMessageMap);
     }
 }
