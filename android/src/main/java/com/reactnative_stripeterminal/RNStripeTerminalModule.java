@@ -217,44 +217,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @ReactMethod
     public void createPayment(final ReadableMap options) {
-        /**
-         * void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
-         *         if (creationError) {
-         *             [self sendEventWithName:@"paymentCreation" body:@{
-         *                                                               @"error": [creationError localizedDescription],
-         *                                                               @"code": @(creationError.code)
-         *                                                               }];
-         *
-         *         } else {
-         *             pendingCreatePaymentIntent = [SCPTerminal.shared collectPaymentMethod:intent delegate:self completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable collectionError) {
-         *                 pendingCreatePaymentIntent = nil;
-         *                 if (collectionError) {
-         *                     [self sendEventWithName:@"paymentCreation" body:@{
-         *                                                                             @"error": [collectionError localizedDescription],
-         *                                                                             @"code": @(collectionError.code),
-         *                                                                             @"intent": [self serializePaymentIntent:intent]
-         *                                                                             }];
-         *
-         *                 } else {
-         *                     [SCPTerminal.shared processPayment:collectedIntent completion:^(SCPPaymentIntent * _Nullable confirmedIntent, SCPProcessPaymentError * _Nullable processError) {
-         *                         if (processError) {
-         *                             [self sendEventWithName:@"paymentCreation" body:@{
-         *                                                                                     @"error": [processError localizedDescription],
-         *                                                                                     @"code": @(processError.code),
-         *                                                                                     @"intent": [self serializePaymentIntent:collectedIntent]
-         *                                                                                     }];
-         *
-         *                         } else {
-         *                             [self sendEventWithName:@"paymentCreation" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
-         *                         }
-         *                     }];
-         *                 }
-         *             }];
-         *         }
-         *     };
-         *
-         * */
-
         PaymentIntentCallback paymentIntentCallback = new PaymentIntentCallback() {
             @Override
             public void onSuccess(@Nonnull final PaymentIntent paymentIntent) {
