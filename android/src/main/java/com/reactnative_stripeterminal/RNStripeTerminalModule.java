@@ -47,8 +47,10 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     final static String moduleName = "RNStripeTerminal";
     Cancelable lastDiscoverReaderAttempt = null;
     Cancelable lastPaymentAttempt = null;
+    PaymentIntent lastPaymentIntent = null;
     ReaderEvent lastReaderEvent=ReaderEvent.CARD_REMOVED;
     ConnectionTokenCallback pendingConnectionTokenCallback = null;
+    String lastCurrency = null;
 
 
     public RNStripeTerminalModule(ReactApplicationContext reactContext) {
@@ -294,6 +296,115 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             Terminal.getInstance().createPaymentIntent(paymentIntentParamBuilder.build(),paymentIntentCallback);
         }
     }
+
+
+    /*
+
+
+    RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
+    NSInteger amount = [RCTConvert NSInteger:options[@"amount"]];
+    NSString *currency = [RCTConvert NSString:options[@"currency"]];
+
+    SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
+
+    NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
+    if (applicationFeeAmount) {
+        params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
+    }
+
+    [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable intent_, NSError * _Nullable error) {
+        intent = intent_;
+        if (error) {
+            [self sendEventWithName:@"paymentIntentCreation" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"paymentIntentCreation" body:@{@"intent": [self serializePaymentIntent:intent]}];
+        }
+    }];
+}
+
+RCT_EXPORT_METHOD(retrievePaymentIntent:(NSString *)clientSecret) {
+    [SCPTerminal.shared retrievePaymentIntent:clientSecret completion:^(SCPPaymentIntent * _Nullable intent_, NSError * _Nullable error) {
+        intent = intent_;
+        if (error) {
+            [self sendEventWithName:@"paymentIntentRetrieval" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"paymentIntentRetrieval" body:@{@"intent": [self serializePaymentIntent:intent]}];
+        }
+    }];
+}
+     */
+
+
+    @ReactMethod
+    public void createPaymentIntent(ReadableMap options){
+        int amount = 0;
+        String currency = "";
+        int applicationFeeAmount = 0;
+
+        if(options!=null){
+            if(options.hasKey(AMOUNT))
+                amount= options.getInt(AMOUNT);
+
+            if(options.hasKey(CURRENCY))
+                currency = options.getString(CURRENCY);
+
+            if(options.hasKey(APPLICATION_FEE_AMOUNT))
+                applicationFeeAmount = options.getInt(APPLICATION_FEE_AMOUNT);
+
+            lastCurrency = currency;
+        }
+
+        PaymentIntentParameters.Builder paramsBuilder = new PaymentIntentParameters.Builder();
+        paramsBuilder.setAmount(amount)
+        .setCurrency(currency)
+        .setApplicationFeeAmount(applicationFeeAmount);
+
+        Terminal.getInstance().createPaymentIntent(paramsBuilder.build(), new PaymentIntentCallback() {
+            @Override
+            public void onSuccess(@Nonnull PaymentIntent paymentIntent) {
+                lastPaymentIntent  = paymentIntent;
+                WritableMap paymentIntentCreateRespMap = Arguments.createMap();
+                paymentIntentCreateRespMap.putMap(INTENT,serializePaymentIntent(paymentIntent,lastCurrency)); //No currency for android
+                sendEventWithName(EVENT_PAYMENT_INTENT_CREATION, paymentIntentCreateRespMap);
+            }
+
+            @Override
+            public void onFailure(@Nonnull TerminalException e) {
+                lastPaymentIntent = null;
+                WritableMap paymentIntentCreateRespMap = Arguments.createMap();
+                paymentIntentCreateRespMap.putString(ERROR,e.getErrorMessage());
+                sendEventWithName(EVENT_PAYMENT_INTENT_CREATION, paymentIntentCreateRespMap);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void retrievePaymentIntent(String clientSecret){
+        if(clientSecret!=null) {
+            Terminal.getInstance().retrievePaymentIntent(clientSecret, new PaymentIntentCallback() {
+                @Override
+                public void onSuccess(@Nonnull PaymentIntent paymentIntent) {
+                    lastPaymentIntent  = paymentIntent;
+                    WritableMap paymentRetrieveRespMap = Arguments.createMap();
+                    paymentRetrieveRespMap.putMap(INTENT,serializePaymentIntent(paymentIntent,"")); //No currency for android
+                    sendEventWithName(EVENT_PAYMENT_INTENT_RETRIEVAL, paymentRetrieveRespMap);
+                }
+
+                @Override
+                public void onFailure(@Nonnull TerminalException e) {
+                    lastPaymentIntent = null;
+                    WritableMap paymentRetrieveRespMap = Arguments.createMap();
+                    paymentRetrieveRespMap.putString(ERROR,e.getErrorMessage());
+                    sendEventWithName(EVENT_PAYMENT_INTENT_RETRIEVAL, paymentRetrieveRespMap);
+                }
+            });
+        }else{
+            WritableMap paymentRetrieveRespMap = Arguments.createMap();
+            paymentRetrieveRespMap.putString(ERROR,"Client secret cannot be null");
+            sendEventWithName(EVENT_PAYMENT_INTENT_RETRIEVAL, paymentRetrieveRespMap);
+        }
+    }
+
 
     @Override
     public void fetchConnectionToken(@Nonnull ConnectionTokenCallback connectionTokenCallback) {

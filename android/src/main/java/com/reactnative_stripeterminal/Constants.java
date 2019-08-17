@@ -24,6 +24,8 @@ public class Constants {
     public static final String EVENT_PAYMENT_CREATION = "paymentCreation";
     public static final String EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE = "didRequestReaderDisplayMessage";
     public static final String EVENT_DID_REQUEST_READER_INPUT = "didRequestReaderInput";
+    public static final String EVENT_PAYMENT_INTENT_RETRIEVAL = "paymentIntentRetrieval";
+    public static final String EVENT_PAYMENT_INTENT_CREATION = "paymentIntentCreation";
 
     //JSON keys
     public static final String ERROR ="error";
