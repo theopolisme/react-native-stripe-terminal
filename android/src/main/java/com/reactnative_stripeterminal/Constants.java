@@ -26,6 +26,9 @@ public class Constants {
     public static final String EVENT_DID_REQUEST_READER_INPUT = "didRequestReaderInput";
     public static final String EVENT_PAYMENT_INTENT_RETRIEVAL = "paymentIntentRetrieval";
     public static final String EVENT_PAYMENT_INTENT_CREATION = "paymentIntentCreation";
+    public static final String EVENT_PROCESS_PAYMENT = "paymentProcess";
+    public static final String EVENT_PAYMENT_INTENT_CANCEL = "paymentIntentCancel";
+
 
     //JSON keys
     public static final String ERROR ="error";
@@ -46,6 +49,7 @@ public class Constants {
     public static final String CREATED = "created";
     public static final String METADATA ="metadata";
     public static final String INTENT="intent";
+    public static final String DECLINE_CODE = "declineCode";
 
     //Put constants
 

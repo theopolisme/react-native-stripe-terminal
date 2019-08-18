@@ -405,6 +405,50 @@ RCT_EXPORT_METHOD(retrievePaymentIntent:(NSString *)clientSecret) {
         }
     }
 
+    @ReactMethod
+    public void cancelPaymentIntent(){
+        Terminal.getInstance().cancelPaymentIntent(lastPaymentIntent, new PaymentIntentCallback() {
+            @Override
+            public void onSuccess(@Nonnull PaymentIntent paymentIntent) {
+                WritableMap paymentIntentCancelMap = Arguments.createMap();
+                paymentIntentCancelMap.putMap(INTENT,serializePaymentIntent(paymentIntent,lastCurrency));
+                sendEventWithName(EVENT_PAYMENT_INTENT_CANCEL,paymentIntentCancelMap);
+            }
+
+            @Override
+            public void onFailure(@Nonnull TerminalException e) {
+                WritableMap errorMap = Arguments.createMap();
+                errorMap.putString(ERROR,e.getErrorMessage());
+                errorMap.putInt(CODE,e.getErrorCode().ordinal());
+                errorMap.putMap(INTENT,serializePaymentIntent(lastPaymentIntent,lastCurrency));
+                sendEventWithName(EVENT_PAYMENT_INTENT_CANCEL,errorMap);
+            }
+        });
+    }
+
+    @ReactMethod
+    public void processPayment(){
+        Terminal.getInstance().processPayment(lastPaymentIntent, new PaymentIntentCallback() {
+            @Override
+            public void onSuccess(@Nonnull PaymentIntent paymentIntent) {
+                lastPaymentIntent = paymentIntent;
+                WritableMap processPaymentMap = Arguments.createMap();
+                processPaymentMap.putMap(INTENT,serializePaymentIntent(paymentIntent,lastCurrency));
+                sendEventWithName(EVENT_PROCESS_PAYMENT,processPaymentMap);
+            }
+
+            @Override
+            public void onFailure(@Nonnull TerminalException e) {
+                WritableMap errorMap = Arguments.createMap();
+                errorMap.putString(ERROR,e.getErrorMessage());
+                errorMap.putInt(CODE,e.getErrorCode().ordinal());
+                errorMap.putString(DECLINE_CODE,e.getApiError().getDeclineCode());
+                errorMap.putMap(INTENT,serializePaymentIntent(lastPaymentIntent,lastCurrency));
+                sendEventWithName(EVENT_PROCESS_PAYMENT,errorMap);
+            }
+        });
+    }
+
 
     @Override
     public void fetchConnectionToken(@Nonnull ConnectionTokenCallback connectionTokenCallback) {
