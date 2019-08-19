@@ -28,6 +28,8 @@ public class Constants {
     public static final String EVENT_PAYMENT_INTENT_CREATION = "paymentIntentCreation";
     public static final String EVENT_PROCESS_PAYMENT = "paymentProcess";
     public static final String EVENT_PAYMENT_INTENT_CANCEL = "paymentIntentCancel";
+    public static final String EVENT_READER_CONNECTION = "readerConnection";
+    public static final String EVENT_PAYMENT_METHOD_COLLECTION = "paymentMethodCollection";
 
 
     //JSON keys
