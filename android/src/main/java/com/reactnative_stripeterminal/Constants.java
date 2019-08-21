@@ -30,7 +30,9 @@ public class Constants {
     public static final String EVENT_PAYMENT_INTENT_CANCEL = "paymentIntentCancel";
     public static final String EVENT_READER_CONNECTION = "readerConnection";
     public static final String EVENT_PAYMENT_METHOD_COLLECTION = "paymentMethodCollection";
-
+    public static final String EVENT_READER_DISCONNECTION_COMPLETION = "readerDisconnectCompletion";
+    public static final String EVENT_CONNECTED_READER = "connectedReader";
+    public static final String EVENT_ABORT_DISCOVER_READER_COMPLETION = "abortDiscoverReadersCompletion";
 
     //JSON keys
     public static final String ERROR ="error";

@@ -421,7 +421,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             }
         });
     }
-    
+
     @ReactMethod
     public void collectPaymentMethod(){
         lastPaymentAttempt = Terminal.getInstance().collectPaymentMethod(lastPaymentIntent, this, new PaymentIntentCallback() {
@@ -478,6 +478,61 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         }
     }
 
+    @ReactMethod
+    public void disconnectReader(){
+       if(Terminal.getInstance().getConnectedReader()==null){
+           sendEventWithName(EVENT_READER_DISCONNECTION_COMPLETION,Arguments.createMap());
+       }else{
+           Terminal.getInstance().disconnectReader(new Callback() {
+               @Override
+               public void onSuccess() {
+                   sendEventWithName(EVENT_READER_DISCONNECTION_COMPLETION,Arguments.createMap());
+               }
+
+               @Override
+               public void onFailure(@Nonnull TerminalException e) {
+                    WritableMap errorMap = Arguments.createMap();
+                    errorMap.putString(ERROR,e.getErrorMessage());
+                    sendEventWithName(EVENT_READER_DISCONNECTION_COMPLETION,errorMap);
+               }
+           });
+       }
+    }
+
+    @ReactMethod
+    public void getLastReaderEvent(){
+        WritableMap readerEventMap = Arguments.createMap();
+        readerEventMap.putInt(EVENT,lastReaderEvent.ordinal());
+        readerEventMap.putMap(INFO,Arguments.createMap());
+        sendEventWithName(EVENT_LAST_READER_EVENT,readerEventMap);
+    }
+
+    @ReactMethod
+    public void getConnectedReader(){
+        Reader reader = Terminal.getInstance().getConnectedReader();
+        sendEventWithName(EVENT_CONNECTED_READER,serializeReader(reader));
+    }
+
+    @ReactMethod
+    public void abortDiscoverReaders(){
+        if(lastDiscoverReaderAttempt!=null && !lastDiscoverReaderAttempt.isCompleted()){
+            lastDiscoverReaderAttempt.cancel(new Callback() {
+                @Override
+                public void onSuccess() {
+                    sendEventWithName(EVENT_ABORT_DISCOVER_READER_COMPLETION,Arguments.createMap());
+                }
+
+                @Override
+                public void onFailure(@Nonnull TerminalException e) {
+                    WritableMap errorMap  = Arguments.createMap();
+                    errorMap.putString(ERROR,e.getErrorMessage());
+                    sendEventWithName(EVENT_ABORT_DISCOVER_READER_COMPLETION,errorMap);
+                }
+            });
+        }else{
+            sendEventWithName(EVENT_ABORT_DISCOVER_READER_COMPLETION,Arguments.createMap());
+        }
+    }
 
     @Override
     public void fetchConnectionToken(@Nonnull ConnectionTokenCallback connectionTokenCallback) {
