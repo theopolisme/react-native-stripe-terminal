@@ -1,7 +1,5 @@
 package com.reactnative_stripeterminal;
 
-import android.net.wifi.aware.DiscoverySession;
-
 import com.stripe.stripeterminal.ConnectionStatus;
 import com.stripe.stripeterminal.DeviceType;
 import com.stripe.stripeterminal.PaymentIntent;
@@ -12,6 +10,8 @@ import java.util.HashMap;
 
 public class Constants {
     public static final HashMap<String,Object> constants = new HashMap<String,Object>();
+
+    //Plugin Events
     public static final String EVENT_READER_DISCOVERY_COMPLETION = "readerDiscoveryCompletion";
     public static final String EVENT_READERS_DISCOVERED = "readersDiscovered";
     public static final String EVENT_LAST_READER_EVENT = "lastReaderEvent";
@@ -63,37 +63,7 @@ public class Constants {
     public static final String DECLINE_CODE = "declineCode";
     public static final String ESTIMATED_UPDATE_TIME = "estimatedUpdateTime";
 
-    //Put constants
-
-    /*
-    @{
-        @"DeviceTypeChipper2X": @(SCPDeviceTypeChipper2X),
-
-        @"DiscoveryMethodBluetoothScan": @(SCPDiscoveryMethodBluetoothScan),
-        @"DiscoveryMethodBluetoothProximity": @(SCPDiscoveryMethodBluetoothProximity),
-
-        @"PaymentIntentStatusRequiresPaymentMethod": @(SCPPaymentIntentStatusRequiresPaymentMethod),
-        @"PaymentIntentStatusRequiresConfirmation": @(SCPPaymentIntentStatusRequiresConfirmation),
-        @"PaymentIntentStatusRequiresCapture": @(SCPPaymentIntentStatusRequiresCapture),
-        @"PaymentIntentStatusCanceled": @(SCPPaymentIntentStatusCanceled),
-        @"PaymentIntentStatusSucceeded": @(SCPPaymentIntentStatusSucceeded),
-
-        @"ReaderEventCardInserted": @(SCPReaderEventCardInserted),
-        @"ReaderEventCardRemoved": @(SCPReaderEventCardRemoved),
-
-        @"PaymentStatusNotReady": @(SCPPaymentStatusNotReady),
-        @"PaymentStatusReady": @(SCPPaymentStatusReady),
-        @"PaymentStatusWaitingForInput": @(SCPPaymentStatusWaitingForInput),
-        @"PaymentStatusProcessing": @(SCPPaymentStatusProcessing),
-
-        @"ConnectionStatusNotConnected": @(SCPConnectionStatusNotConnected),
-        @"ConnectionStatusConnected": @(SCPConnectionStatusConnected),
-        @"ConnectionStatusConnecting": @(SCPConnectionStatusConnecting),
-    };
-
-
-    */
-
+    //Plugin Constants
     static{
         constants.put("DeviceTypeChipper2X", DeviceType.CHIPPER_2X.ordinal());
         constants.put("DiscoveryMethodBluetoothScan",0);               //Not applicable for Android SDK
