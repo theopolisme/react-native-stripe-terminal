@@ -6,6 +6,7 @@ import com.facebook.react.bridge.ReactContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
@@ -39,6 +40,7 @@ import com.stripe.stripeterminal.TerminalListener;
 import java.sql.Wrapper;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -284,43 +286,82 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         if (paymentIntent != null && !paymentIntent.trim().isEmpty()) {
             Terminal.getInstance().retrievePaymentIntent(paymentIntent, paymentIntentCallback);
         } else {
-            int amount = options.getInt(AMOUNT);
-            String currency = options.getString(CURRENCY);
-            PaymentIntentParameters.Builder paymentIntentParamBuilder = new PaymentIntentParameters.Builder();
-            paymentIntentParamBuilder.setAmount(amount);
-            paymentIntentParamBuilder.setCurrency(currency);
-            if (options.hasKey(APPLICATION_FEE_AMOUNT)) {
-                int applicationFeeAmount = options.getInt(APPLICATION_FEE_AMOUNT);
-                paymentIntentParamBuilder.setApplicationFeeAmount(applicationFeeAmount);
-            }
-
+            PaymentIntentParameters.Builder paymentIntentParamBuilder = getPaymentParams(options);
             Terminal.getInstance().createPaymentIntent(paymentIntentParamBuilder.build(), paymentIntentCallback);
         }
     }
 
-    @ReactMethod
-    public void createPaymentIntent(ReadableMap options){
-        int amount = 0;
-        String currency = "";
-        int applicationFeeAmount = 0;
+    private PaymentIntentParameters.Builder getPaymentParams(ReadableMap options){
+        PaymentIntentParameters.Builder paymentIntentParamBuilder = new PaymentIntentParameters.Builder();
+        if(options!=null) {
+            if (options.hasKey(AMOUNT)) {
+                paymentIntentParamBuilder.setAmount(options.getInt(AMOUNT));
+            }
 
-        if(options!=null){
-            if(options.hasKey(AMOUNT))
-                amount= options.getInt(AMOUNT);
+            if (options.hasKey(CURRENCY)) {
+                paymentIntentParamBuilder.setCurrency(options.getString(CURRENCY));
+            }
 
-            if(options.hasKey(CURRENCY))
-                currency = options.getString(CURRENCY);
+            if (options.hasKey(APPLICATION_FEE_AMOUNT)) {
+                paymentIntentParamBuilder.setApplicationFeeAmount(options.getInt(APPLICATION_FEE_AMOUNT));
+            }
 
-            if(options.hasKey(APPLICATION_FEE_AMOUNT))
-                applicationFeeAmount = options.getInt(APPLICATION_FEE_AMOUNT);
+            if (options.hasKey(ON_BEHALF_OF)) {
+                paymentIntentParamBuilder.setOnBehalfOf(options.getString(ON_BEHALF_OF));
+            }
 
-            lastCurrency = currency;
+            if (options.hasKey(TRANSFER_DATA_DESTINATION)) {
+                paymentIntentParamBuilder.setTransferDataDestination(options.getString(TRANSFER_DATA_DESTINATION));
+            }
+
+            if (options.hasKey(TRANSFER_GROUP)) {
+                paymentIntentParamBuilder.setTransferGroup(TRANSFER_GROUP);
+            }
+
+            if (options.hasKey(CUSTOMER)) {
+                paymentIntentParamBuilder.setCustomer(options.getString(CUSTOMER));
+            }
+
+            if (options.hasKey(DESCRIPTION)) {
+                paymentIntentParamBuilder.setDescription(options.getString(DESCRIPTION));
+            }
+
+            if (options.hasKey(STATEMENT_DESCRIPTOR)) {
+                paymentIntentParamBuilder.setStatementDescriptor(options.getString(STATEMENT_DESCRIPTOR));
+            }
+
+            if (options.hasKey(RECEIPT_EMAIL)) {
+                paymentIntentParamBuilder.setReceiptEmail(options.getString(RECEIPT_EMAIL));
+            }
+
+            if (options.hasKey(METADATA)) {
+                ReadableMap map = options.getMap(METADATA);
+                HashMap<String, String> metaDataMap = new HashMap<>();
+
+                if (map != null) {
+                    ReadableMapKeySetIterator iterator = options.keySetIterator();
+                    while (iterator.hasNextKey()) {
+                        String key = iterator.nextKey();
+                        String val = options.getString(key);
+                        metaDataMap.put(key, val);
+                    }
+                }
+
+                paymentIntentParamBuilder.setMetadata(metaDataMap);
+            }
         }
 
-        PaymentIntentParameters.Builder paramsBuilder = new PaymentIntentParameters.Builder();
-        paramsBuilder.setAmount(amount)
-        .setCurrency(currency)
-        .setApplicationFeeAmount(applicationFeeAmount);
+        return paymentIntentParamBuilder;
+    }
+
+    @ReactMethod
+    public void createPaymentIntent(ReadableMap options){
+        if(options!=null){
+            if(options.hasKey(CURRENCY))
+                lastCurrency = options.getString(CURRENCY);
+        }
+
+        PaymentIntentParameters.Builder paramsBuilder = getPaymentParams(options);
 
         Terminal.getInstance().createPaymentIntent(paramsBuilder.build(), new PaymentIntentCallback() {
             @Override
