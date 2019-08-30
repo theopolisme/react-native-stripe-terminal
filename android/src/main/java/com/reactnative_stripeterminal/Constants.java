@@ -62,6 +62,13 @@ public class Constants {
     public static final String INTENT="intent";
     public static final String DECLINE_CODE = "declineCode";
     public static final String ESTIMATED_UPDATE_TIME = "estimatedUpdateTime";
+    public static final String ON_BEHALF_OF = "onBehalfOf";
+    public static final String TRANSFER_DATA_DESTINATION = "transferDataDestination";
+    public static final String TRANSFER_GROUP = "transferGroup";
+    public static final String CUSTOMER = "customer";
+    public static final String DESCRIPTION = "description";
+    public static final String STATEMENT_DESCRIPTOR = "statementDescriptor";
+    public static final String RECEIPT_EMAIL = "receiptEmail";
 
     //Plugin Constants
     static{
