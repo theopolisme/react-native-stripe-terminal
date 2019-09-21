@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter } from 'react-native';
+import { NativeModules, NativeEventEmitter,Platform } from 'react-native';
 import createHooks from './hooks';
 import createConnectionService from './connectionService';
 
@@ -99,7 +99,20 @@ class StripeTerminal {
 
   initialize({ fetchConnectionToken }) {
     this._fetchConnectionToken = fetchConnectionToken;
-    RNStripeTerminal.initialize();
+    return new Promise((resolve, reject)=>{
+    if(Platform.OS == "android"){
+      RNStripeTerminal.initialize((status)=>{
+        if(status.isInitialized === true){
+          resolve()
+        }else{
+          reject(status.error);
+        }
+      });
+    }else{
+      RNStripeTerminal.initialize();
+      resolve();
+    }
+  });
   }
 
   discoverReaders(deviceType, method, simulated) {
