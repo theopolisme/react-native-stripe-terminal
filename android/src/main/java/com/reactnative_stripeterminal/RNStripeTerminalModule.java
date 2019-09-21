@@ -62,7 +62,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     ReaderSoftwareUpdate readerSoftwareUpdate;
     Cancelable pendingInstallUpdate = null;
 
-
     public RNStripeTerminalModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
@@ -189,7 +188,17 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public void initialize() {
+    public void initialize(com.facebook.react.bridge.Callback callback) {
+        try {
+            //Check if stripe is initialized
+            Terminal.getInstance();
+
+            WritableMap writableMap = Arguments.createMap();
+            writableMap.putBoolean("isInitialized", true);
+            callback.invoke(writableMap);
+            return;
+        }catch (IllegalStateException e){ }
+
         pendingConnectionTokenCallback = null;
         abortDiscoverReaders();
         abortCreatePayment();
@@ -198,13 +207,30 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         LogLevel logLevel = LogLevel.VERBOSE;
         ConnectionTokenProvider tokenProvider = this;
         TerminalListener terminalListener = this;
-
+        String err = "";
+        boolean isInit =false;
         try {
             Terminal.initTerminal(getContext().getApplicationContext(), logLevel, tokenProvider, terminalListener);
             lastReaderEvent = ReaderEvent.CARD_REMOVED;
+            isInit = true;
         } catch (TerminalException e) {
             e.printStackTrace();
+            err = e.getErrorMessage();
+            isInit = false;
+        } catch (IllegalStateException ex){
+            ex.printStackTrace();
+            err=  ex.getMessage();
+            isInit = true;
         }
+
+        WritableMap writableMap = Arguments.createMap();
+        writableMap.putBoolean("isInitialized", isInit);
+
+        if(!isInit) {
+            writableMap.putString(ERROR, err);
+        }
+
+        callback.invoke(writableMap);
     }
 
     @ReactMethod
