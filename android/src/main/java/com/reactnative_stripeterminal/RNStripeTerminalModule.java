@@ -98,21 +98,41 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     WritableMap serializeUpdate(ReaderSoftwareUpdate readerSoftwareUpdate){
         WritableMap writableMap = Arguments.createMap();
+        WritableMap updateMap = Arguments.createMap();
+
         if(readerSoftwareUpdate!=null){
             ReaderSoftwareUpdate.UpdateTimeEstimate updateTimeEstimate= readerSoftwareUpdate.getTimeEstimate();
-            writableMap.putString(ESTIMATED_UPDATE_TIME,updateTimeEstimate.getDescription());
-            writableMap.putString(DEVICE_SOFTWARE_VERSION,readerSoftwareUpdate.getVersion());
+            updateMap.putString(ESTIMATED_UPDATE_TIME,updateTimeEstimate.getDescription());
+            updateMap.putString(DEVICE_SOFTWARE_VERSION,readerSoftwareUpdate.getVersion());
+            writableMap.putMap(UPDATE,updateMap);
         }
+
         return writableMap;
     }
 
     WritableMap serializeReader(Reader reader) {
         WritableMap writableMap = Arguments.createMap();
         if(reader!=null) {
-            writableMap.putDouble(BATTERY_LEVEL, reader.getBatteryLevel());
-            writableMap.putInt(DEVICE_TYPE, reader.getDeviceType().ordinal());
-            writableMap.putString(SERIAL_NUMBER, reader.getSerialNumber());
-            writableMap.putString(DEVICE_SOFTWARE_VERSION, reader.getSoftwareVersion());
+            double batteryLevel = 0;
+            if(reader.getBatteryLevel()!=null)
+                batteryLevel = (double) reader.getBatteryLevel();
+            writableMap.putDouble(BATTERY_LEVEL, batteryLevel);
+
+            int readerType = 0;
+            if(reader.getDeviceType()!=null)
+                readerType = reader.getDeviceType().ordinal();
+            writableMap.putInt(DEVICE_TYPE, readerType);
+
+            String serial = "";
+
+            if(reader.getSerialNumber()!=null)
+                serial = reader.getSerialNumber();
+            writableMap.putString(SERIAL_NUMBER, serial);
+
+            String softwareVersion = "";
+            if(reader.getSoftwareVersion()!=null)
+                softwareVersion = reader.getSoftwareVersion();
+            writableMap.putString(DEVICE_SOFTWARE_VERSION, softwareVersion);
         }
         return writableMap;
     }
@@ -136,10 +156,11 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public void discoverReaders(int deviceType, int method, boolean simulated) {
+    public void discoverReaders(int deviceType, int method, int simulated) {
+        boolean isSimulated = simulated == 0?false:true;
         try {
             DeviceType devType = DeviceType.values()[deviceType];
-            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, devType, simulated);
+            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, devType, isSimulated);
             Callback statusCallback = new Callback() {
 
                 @Override
@@ -658,6 +679,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         });
     }
 
+    @ReactMethod
     public void checkForUpdate(){
         Terminal.getInstance().checkForUpdate(new ReaderSoftwareUpdateCallback() {
             @Override

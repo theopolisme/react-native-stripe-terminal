@@ -69,6 +69,7 @@ public class Constants {
     public static final String DESCRIPTION = "description";
     public static final String STATEMENT_DESCRIPTOR = "statementDescriptor";
     public static final String RECEIPT_EMAIL = "receiptEmail";
+    public static final String UPDATE ="update";
 
     //Plugin Constants
     static{
