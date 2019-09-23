@@ -62,7 +62,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     ReaderSoftwareUpdate readerSoftwareUpdate;
     Cancelable pendingInstallUpdate = null;
 
-
     public RNStripeTerminalModule(ReactApplicationContext reactContext) {
         super(reactContext);
     }
@@ -99,21 +98,41 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     WritableMap serializeUpdate(ReaderSoftwareUpdate readerSoftwareUpdate){
         WritableMap writableMap = Arguments.createMap();
+        WritableMap updateMap = Arguments.createMap();
+
         if(readerSoftwareUpdate!=null){
             ReaderSoftwareUpdate.UpdateTimeEstimate updateTimeEstimate= readerSoftwareUpdate.getTimeEstimate();
-            writableMap.putString(ESTIMATED_UPDATE_TIME,updateTimeEstimate.getDescription());
-            writableMap.putString(DEVICE_SOFTWARE_VERSION,readerSoftwareUpdate.getVersion());
+            updateMap.putString(ESTIMATED_UPDATE_TIME,updateTimeEstimate.getDescription());
+            updateMap.putString(DEVICE_SOFTWARE_VERSION,readerSoftwareUpdate.getVersion());
+            writableMap.putMap(UPDATE,updateMap);
         }
+
         return writableMap;
     }
 
     WritableMap serializeReader(Reader reader) {
         WritableMap writableMap = Arguments.createMap();
         if(reader!=null) {
-            writableMap.putDouble(BATTERY_LEVEL, reader.getBatteryLevel());
-            writableMap.putInt(DEVICE_TYPE, reader.getDeviceType().ordinal());
-            writableMap.putString(SERIAL_NUMBER, reader.getSerialNumber());
-            writableMap.putString(DEVICE_SOFTWARE_VERSION, reader.getSoftwareVersion());
+            double batteryLevel = 0;
+            if(reader.getBatteryLevel()!=null)
+                batteryLevel = (double) reader.getBatteryLevel();
+            writableMap.putDouble(BATTERY_LEVEL, batteryLevel);
+
+            int readerType = 0;
+            if(reader.getDeviceType()!=null)
+                readerType = reader.getDeviceType().ordinal();
+            writableMap.putInt(DEVICE_TYPE, readerType);
+
+            String serial = "";
+
+            if(reader.getSerialNumber()!=null)
+                serial = reader.getSerialNumber();
+            writableMap.putString(SERIAL_NUMBER, serial);
+
+            String softwareVersion = "";
+            if(reader.getSoftwareVersion()!=null)
+                softwareVersion = reader.getSoftwareVersion();
+            writableMap.putString(DEVICE_SOFTWARE_VERSION, softwareVersion);
         }
         return writableMap;
     }
@@ -137,10 +156,11 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public void discoverReaders(int deviceType, int method, boolean simulated) {
+    public void discoverReaders(int deviceType, int method, int simulated) {
+        boolean isSimulated = simulated == 0?false:true;
         try {
             DeviceType devType = DeviceType.values()[deviceType];
-            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, devType, simulated);
+            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, devType, isSimulated);
             Callback statusCallback = new Callback() {
 
                 @Override
@@ -189,7 +209,17 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public void initialize() {
+    public void initialize(com.facebook.react.bridge.Callback callback) {
+        try {
+            //Check if stripe is initialized
+            Terminal.getInstance();
+
+            WritableMap writableMap = Arguments.createMap();
+            writableMap.putBoolean("isInitialized", true);
+            callback.invoke(writableMap);
+            return;
+        }catch (IllegalStateException e){ }
+
         pendingConnectionTokenCallback = null;
         abortDiscoverReaders();
         abortCreatePayment();
@@ -198,13 +228,30 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         LogLevel logLevel = LogLevel.VERBOSE;
         ConnectionTokenProvider tokenProvider = this;
         TerminalListener terminalListener = this;
-
+        String err = "";
+        boolean isInit =false;
         try {
             Terminal.initTerminal(getContext().getApplicationContext(), logLevel, tokenProvider, terminalListener);
             lastReaderEvent = ReaderEvent.CARD_REMOVED;
+            isInit = true;
         } catch (TerminalException e) {
             e.printStackTrace();
+            err = e.getErrorMessage();
+            isInit = false;
+        } catch (IllegalStateException ex){
+            ex.printStackTrace();
+            err=  ex.getMessage();
+            isInit = true;
         }
+
+        WritableMap writableMap = Arguments.createMap();
+        writableMap.putBoolean("isInitialized", isInit);
+
+        if(!isInit) {
+            writableMap.putString(ERROR, err);
+        }
+
+        callback.invoke(writableMap);
     }
 
     @ReactMethod
@@ -632,6 +679,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         });
     }
 
+    @ReactMethod
     public void checkForUpdate(){
         Terminal.getInstance().checkForUpdate(new ReaderSoftwareUpdateCallback() {
             @Override
