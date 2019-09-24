@@ -329,7 +329,10 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             }
         };
 
-        String paymentIntent = options.getString(PAYMENT_INTENT);
+        String paymentIntent = null;
+        if(options.hasKey(PAYMENT_INTENT))
+            paymentIntent = options.getString(PAYMENT_INTENT);
+
         if (paymentIntent != null && !paymentIntent.trim().isEmpty()) {
             Terminal.getInstance().retrievePaymentIntent(paymentIntent, paymentIntentCallback);
         } else {
