@@ -291,8 +291,11 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
     SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
 
     NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
+    
     if (applicationFeeAmount) {
         params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
+        params.onBehalfOf = options[@"onBehalfOf"];
+        params.transferDataDestination = options[@"transferDataDestination"];
     }
 
     [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable intent_, NSError * _Nullable error) {
