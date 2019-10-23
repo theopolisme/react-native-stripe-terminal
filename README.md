@@ -1,10 +1,10 @@
 # react-native-stripe-terminal
 
-React Native wrapper for the [Stripe Terminal](https://stripe.com/docs/terminal/ios) SDK. (iOS-only, for now.)
+React Native wrapper for the [Stripe Terminal](https://stripe.com/docs/terminal/ios) SDK. (iOS & Android compatible!)
 
 ## Getting started
 
-First, follow all Stripe instructions under ["Set up the iOS SDK"](https://stripe.com/docs/terminal/ios#install). Then:
+First, follow all Stripe instructions under ["Install the iOS SDK"](https://stripe.com/docs/terminal/sdk/ios#install) and/or ["Install the Android SDK"](https://stripe.com/docs/terminal/sdk/android#install) (depending on your platform). Then:
 
 `$ npm install git+https://github.com/theopolisme/react-native-stripe-terminal.git --save`
 
@@ -20,6 +20,21 @@ First, follow all Stripe instructions under ["Set up the iOS SDK"](https://strip
 2. Go to `node_modules` ➜ `react-native-stripe-terminal` and add `RNStripeTerminal.xcodeproj`
 3. In XCode, in the project navigator, select your project. Add `libRNStripeTerminal.a` to your project's `Build Phases` ➜ `Link Binary With Libraries`
 4. Run your project (`Cmd+R`)
+
+#### Android
+
+1. Open up `android/app/src/main/java/[...]/MainApplication.java`
+  - Add `import com.reactlibrary.RNStripeTerminalPackage;` to the imports at the top of the file
+  - Add `new RNStripeTerminalPackage()` to the list returned by the `getPackages()` method
+2. Append the following lines to `android/settings.gradle`:
+  	```
+  	include ':react-native-stripe-terminal'
+  	project(':react-native-stripe-terminal').projectDir = new File(rootProject.projectDir, 	'../node_modules/react-native-stripe-terminal/android')
+  	```
+3. Insert the following lines inside the dependencies block in `android/app/build.gradle`:
+  	```
+      compile project(':react-native-stripe-terminal')
+  	```
 
 ## Usage
 
