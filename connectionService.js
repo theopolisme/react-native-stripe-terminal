@@ -41,17 +41,13 @@ export default function createConnectionService(StripeTerminal, options) {
       this.emitter = new EventEmitter();
       this.desiredReader = null;
 
-      this.listeners = [
-        StripeTerminal.addReadersDiscoveredListener(
-          this.onReadersDiscovered.bind(this)
-        ),
-        StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
-          this.onUnexpectedDisconnect.bind(this)
-        )
-      ];
+      StripeTerminal.addReadersDiscoveredListener(this.onReadersDiscovered);
+      StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
+        this.onUnexpectedDisconnect
+      );
     }
 
-    onReadersDiscovered(readers) {
+    onReadersDiscovered = readers => {
       this.emitter.emit(STCS.EventReadersDiscovered, readers);
 
       if (!readers.length) {
@@ -113,12 +109,12 @@ export default function createConnectionService(StripeTerminal, options) {
         this.emitter.emit(STCS.EventPersistedReaderNotFound, readers);
         this.connect();
       }
-    }
+    };
 
-    onUnexpectedDisconnect() {
+    onUnexpectedDisconnect = () => {
       // Automatically attempt to reconnect.
       this.connect();
-    }
+    };
 
     async connect(serialNumber) {
       this.emitter.emit(
@@ -210,7 +206,11 @@ export default function createConnectionService(StripeTerminal, options) {
 
     async stop() {
       await StripeTerminal.disconnectReader();
-      this.listeners.forEach(l => l.remove());
+
+      StripeTerminal.removeReadersDiscoveredListener(this.onReadersDiscovered);
+      StripeTerminal.removeDidReportUnexpectedReaderDisconnectListener(
+        this.onUnexpectedDisconnect
+      );
     }
   }
 
