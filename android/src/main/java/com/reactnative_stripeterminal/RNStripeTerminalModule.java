@@ -10,32 +10,32 @@ import com.facebook.react.bridge.ReadableMapKeySetIterator;
 import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.DeviceEventManagerModule;
-import com.stripe.stripeterminal.Callback;
-import com.stripe.stripeterminal.Cancelable;
-import com.stripe.stripeterminal.ConnectionStatus;
-import com.stripe.stripeterminal.ConnectionTokenCallback;
-import com.stripe.stripeterminal.ConnectionTokenException;
-import com.stripe.stripeterminal.ConnectionTokenProvider;
-import com.stripe.stripeterminal.DeviceType;
-import com.stripe.stripeterminal.DiscoveryConfiguration;
-import com.stripe.stripeterminal.DiscoveryListener;
-import com.stripe.stripeterminal.LogLevel;
-import com.stripe.stripeterminal.PaymentIntent;
-import com.stripe.stripeterminal.PaymentIntentCallback;
-import com.stripe.stripeterminal.PaymentIntentParameters;
-import com.stripe.stripeterminal.PaymentStatus;
-import com.stripe.stripeterminal.Reader;
-import com.stripe.stripeterminal.ReaderCallback;
-import com.stripe.stripeterminal.ReaderDisplayListener;
-import com.stripe.stripeterminal.ReaderDisplayMessage;
-import com.stripe.stripeterminal.ReaderEvent;
-import com.stripe.stripeterminal.ReaderInputOptions;
-import com.stripe.stripeterminal.ReaderSoftwareUpdate;
-import com.stripe.stripeterminal.ReaderSoftwareUpdateCallback;
-import com.stripe.stripeterminal.ReaderSoftwareUpdateListener;
+import com.stripe.stripeterminal.callable.Callback;
+import com.stripe.stripeterminal.callable.Cancelable;
+import com.stripe.stripeterminal.callable.ConnectionTokenCallback;
+import com.stripe.stripeterminal.callable.ConnectionTokenProvider;
+import com.stripe.stripeterminal.callable.DiscoveryListener;
+import com.stripe.stripeterminal.callable.PaymentIntentCallback;
+import com.stripe.stripeterminal.callable.ReaderCallback;
+import com.stripe.stripeterminal.callable.ReaderDisplayListener;
+import com.stripe.stripeterminal.callable.ReaderSoftwareUpdateCallback;
+import com.stripe.stripeterminal.callable.ReaderSoftwareUpdateListener;
+import com.stripe.stripeterminal.callable.TerminalListener;
+import com.stripe.stripeterminal.log.LogLevel;
+import com.stripe.stripeterminal.model.external.ConnectionStatus;
+import com.stripe.stripeterminal.model.external.ConnectionTokenException;
+import com.stripe.stripeterminal.model.external.DeviceType;
+import com.stripe.stripeterminal.model.external.DiscoveryConfiguration;
+import com.stripe.stripeterminal.model.external.PaymentIntent;
+import com.stripe.stripeterminal.model.external.PaymentIntentParameters;
+import com.stripe.stripeterminal.model.external.PaymentStatus;
+import com.stripe.stripeterminal.model.external.Reader;
+import com.stripe.stripeterminal.model.external.ReaderDisplayMessage;
+import com.stripe.stripeterminal.model.external.ReaderEvent;
+import com.stripe.stripeterminal.model.external.ReaderInputOptions;
+import com.stripe.stripeterminal.model.external.ReaderSoftwareUpdate;
+import com.stripe.stripeterminal.model.external.TerminalException;
 import com.stripe.stripeterminal.Terminal;
-import com.stripe.stripeterminal.TerminalException;
-import com.stripe.stripeterminal.TerminalListener;
 
 import java.sql.Wrapper;
 import java.text.SimpleDateFormat;
@@ -49,7 +49,7 @@ import javax.annotation.Nullable;
 
 import static com.reactnative_stripeterminal.Constants.*;
 
-public class RNStripeTerminalModule extends ReactContextBaseJavaModule implements TerminalListener, ConnectionTokenProvider, ReaderDisplayListener, ReaderSoftwareUpdateListener {
+public class RNStripeTerminalModule extends ReactContextBaseJavaModule implements TerminalListener, ConnectionTokenProvider, ReaderDisplayListener, ReaderSoftwareUpdateListener, DiscoveryListener {
     final static String TAG = RNStripeTerminalModule.class.getSimpleName();
     final static String moduleName = "RNStripeTerminal";
     Cancelable pendingDiscoverReaders = null;
@@ -58,7 +58,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     ReaderEvent lastReaderEvent=ReaderEvent.CARD_REMOVED;
     ConnectionTokenCallback pendingConnectionTokenCallback = null;
     String lastCurrency = null;
-    List<Reader> discoveredReadersList = null;
+    List<? extends Reader> discoveredReadersList = null;
     ReaderSoftwareUpdate readerSoftwareUpdate;
     Cancelable pendingInstallUpdate = null;
 
@@ -179,23 +179,8 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
                 }
             };
 
-            DiscoveryListener discoveryListener = new DiscoveryListener() {
-                @Override
-                public void onUpdateDiscoveredReaders(@Nonnull List<Reader> list) {
-                    discoveredReadersList = list;
-                    WritableArray readersDiscoveredArr = Arguments.createArray();
-                    for(Reader reader : list){
-                        if(reader!=null){
-                            readersDiscoveredArr.pushMap(serializeReader(reader));
-                        }
-                    }
-
-                    sendEventWithName(EVENT_READERS_DISCOVERED,readersDiscoveredArr);
-                }
-            };
-
             abortDiscoverReaders();
-            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, discoveryListener, statusCallback);
+            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, this, statusCallback);
 
         }catch (Exception e){
             e.printStackTrace();
@@ -712,6 +697,19 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         PaymentStatus status = Terminal.getInstance().getPaymentStatus();
         WritableMap statusMap = Arguments.createMap();
         statusMap.putInt(EVENT_PAYMENT_STATUS,status.ordinal());
+    }
+
+    @Override
+    public void onUpdateDiscoveredReaders(@Nonnull List<? extends Reader> list) {
+        discoveredReadersList = list;
+        WritableArray readersDiscoveredArr = Arguments.createArray();
+        for(Reader reader : list){
+            if(reader!=null){
+                readersDiscoveredArr.pushMap(serializeReader(reader));
+            }
+        }
+
+        sendEventWithName(EVENT_READERS_DISCOVERED,readersDiscoveredArr);
     }
 
     @Override
