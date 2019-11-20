@@ -213,7 +213,7 @@ RCT_EXPORT_METHOD(installUpdate) {
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
     return @{
              @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
-             @"deviceSoftwareVersion": update.deviceSoftwareVersion
+             @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
              };
 }
 
