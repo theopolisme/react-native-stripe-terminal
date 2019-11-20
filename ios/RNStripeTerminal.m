@@ -278,6 +278,8 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
         NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
         if (applicationFeeAmount) {
             params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
+            params.onBehalfOf = options[@"onBehalfOf"];
+            params.transferDataDestination = options[@"transferDataDestination"];
         }
 
         [SCPTerminal.shared createPaymentIntent:params completion:onIntent];
