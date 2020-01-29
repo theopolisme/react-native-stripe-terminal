@@ -24,11 +24,12 @@ export default function createConnectionService(StripeTerminal, options) {
 
     static DesiredReaderAny = "any";
 
-    constructor({ policy, deviceType, discoveryMode }) {
+    constructor({ policy, deviceType, discoveryMode, simulated }) {
       this.policy = policy;
       this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
       this.discoveryMode =
         discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
+      this.simulated = simulated || 0;
 
       if (STCS.Policies.indexOf(policy) === -1) {
         throw new Error(
@@ -128,13 +129,29 @@ export default function createConnectionService(StripeTerminal, options) {
       if (!this.desiredReader) {
         this.desiredReader = STCS.DesiredReaderAny;
       }
+
+      // Don't reconnect if we are already connected to the desired reader.
+      // (This state can occur when hot-reloading, for example.)
+      const currentReader = await this.getReader();
+      if (currentReader) {
+        return Promise.resolve();
+      }
+
+      await StripeTerminal.abortDiscoverReaders(); // end any pending search
+      await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
+      return StripeTerminal.discoverReaders(
+        this.deviceType,
+        this.discoveryMode,
+        this.simulated,
+      );
     }
 
     async discover() {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       return StripeTerminal.discoverReaders(
         this.deviceType,
-        this.discoveryMode
+        this.discoveryMode,
+        this.simulated,
       );
     }
 
@@ -161,7 +178,7 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     async getPersistedReaderSerialNumber() {
-      return await AsyncStorage.getItem(STCS.StorageKey);
+      return AsyncStorage.getItem(STCS.StorageKey);
     }
 
     async setPersistedReaderSerialNumber(serialNumber) {
