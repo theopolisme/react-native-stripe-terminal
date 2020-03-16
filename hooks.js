@@ -153,7 +153,8 @@ export default function createHooks(StripeTerminal) {
 
       // Cleanup: remove listeners
       return () => {
-        listeners.forEach(l => l.remove());
+        service.emitter.removeListener('readersDiscovered')
+        service.emitter.removeListener('readerPersisted')
       };
     }, []);
 
