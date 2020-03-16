@@ -25,8 +25,8 @@ export default function createHooks(StripeTerminal) {
         }),
         StripeTerminal.addDidChangePaymentStatusListener(({ status }) => setPaymentStatus(status)),
         StripeTerminal.addDidReportReaderEventListener(({ event }) => setLastReaderEvent(event)),
-        StripeTerminal.addDidBeginWaitingForReaderInputListener(({ text }) => setReaderInputOptions(text)),
-        StripeTerminal.addDidRequestReaderInputPromptListener(({ text }) => setReaderInputPrompt(text))
+        StripeTerminal.addDidRequestReaderInputListener(({ text }) => setReaderInputOptions(text)),
+        StripeTerminal.addDidRequestReaderDisplayMessageListener(({ text }) => setReaderInputPrompt(text))
       ];
 
       // Cleanup: remove listeners
