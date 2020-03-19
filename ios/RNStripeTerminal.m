@@ -355,18 +355,22 @@ RCT_EXPORT_METHOD(processPayment) {
 }
 
 RCT_EXPORT_METHOD(cancelPaymentIntent) {
-    [SCPTerminal.shared cancelPaymentIntent:intent completion:^(SCPPaymentIntent * _Nullable canceledIntent, NSError * _Nullable error) {
-        if (error) {
-            [self sendEventWithName:@"paymentIntentCancel" body:@{
-                                                                    @"error": [error localizedDescription],
-                                                                    @"code": @(error.code),
-                                                                    @"intent": [self serializePaymentIntent:intent]
-                                                                    }];
+    if (intent) {
+        [SCPTerminal.shared cancelPaymentIntent:intent completion:^(SCPPaymentIntent * _Nullable canceledIntent, NSError * _Nullable error) {
+            if (error) {
+                [self sendEventWithName:@"paymentIntentCancel" body:@{
+                                                                        @"error": [error localizedDescription],
+                                                                        @"code": @(error.code),
+                                                                        @"intent": [self serializePaymentIntent:intent]
+                                                                        }];
 
-        } else {
-            [self sendEventWithName:@"paymentIntentCancel" body:@{@"intent": [self serializePaymentIntent:canceledIntent]}];
-        }
-    }];
+            } else {
+                [self sendEventWithName:@"paymentIntentCancel" body:@{@"intent": [self serializePaymentIntent:canceledIntent]}];
+            }
+        }];
+    } else {
+        [self sendEventWithName:@"paymentIntentCancel" body:@{}];
+    }
 }
 
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
