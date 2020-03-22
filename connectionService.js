@@ -128,20 +128,6 @@ export default function createConnectionService(StripeTerminal, options) {
       if (!this.desiredReader) {
         this.desiredReader = STCS.DesiredReaderAny;
       }
-
-      // Don't reconnect if we are already connected to the desired reader.
-      // (This state can occur when hot-reloading, for example.)
-      const currentReader = await this.getReader();
-      if (currentReader) {
-        return Promise.resolve();
-      }
-
-      await StripeTerminal.abortDiscoverReaders(); // end any pending search
-      await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
-      return StripeTerminal.discoverReaders(
-        this.deviceType,
-        this.discoveryMode
-      );
     }
 
     async discover() {
