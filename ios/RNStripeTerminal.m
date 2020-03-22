@@ -377,10 +377,19 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 }
 
 - (void)terminal:(SCPTerminal *)terminal didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
-    [self sendEventWithName:@"didRequestReaderDisplayMessage" body:
-     @{
-       @"text": [SCPTerminal stringFromReaderDisplayMessage:displayMessage]
-       }];
+    NSString* const SCPReaderDisplayMessageToStringMap[] = {
+        [SCPReaderDisplayMessageRetryCard] = @"RetryCard",
+        [SCPReaderDisplayMessageInsertCard] = @"InsertCard",
+        [SCPReaderDisplayMessageInsertOrSwipeCard] = @"InsertOrSwipeCard",
+        [SCPReaderDisplayMessageSwipeCard] = @"SwipeCard",
+        [SCPReaderDisplayMessageRemoveCard] = @"RemoveCard",
+        [SCPReaderDisplayMessageMultipleContactlessCardsDetected] = @"MultipleContactlessCardsDetected",
+        [SCPReaderDisplayMessageTryAnotherReadMethod] = @"TryAnotherReadMethod",
+        [SCPReaderDisplayMessageTryAnotherCard] = @"TryAnotherCard"
+    };
+
+    [self sendEventWithName:@"didRequestReaderDisplayMessage"
+          body: @{@"text": SCPReaderDisplayMessageToStringMap[displayMessage]}];
 }
 
 - (void)terminal:(SCPTerminal *)terminal didReportReaderEvent:(SCPReaderEvent)event info:(NSDictionary *)info {
