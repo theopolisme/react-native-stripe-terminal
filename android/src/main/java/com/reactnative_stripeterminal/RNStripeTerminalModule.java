@@ -760,9 +760,18 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @Override
     public void onRequestReaderDisplayMessage(@Nonnull ReaderDisplayMessage readerDisplayMessage) {
-        WritableMap displayMessageMap = Arguments.createMap();
-        displayMessageMap.putString(TEXT,readerDisplayMessage.toString());
-        sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE,displayMessageMap);
+        Map<String, String> readerDisplayMessageToStringMap = new HashMap<String, String>() {{
+            put(ReaderDisplayMessage.RETRY_CARD, "RetryCard");
+            put(ReaderDisplayMessage.INSERT_CARD, "InsertCard");
+            put(ReaderDisplayMessage.INSERT_OR_SWIPE_CARD, "InsertOrSwipeCard");
+            put(ReaderDisplayMessage.SWIPE_CARD, "SwipeCard");
+            put(ReaderDisplayMessage.REMOVE_CARD, "RemoveCard");
+            put(ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED, "MultipleContactlessCardsDetected");
+            put(ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD, "TryAnotherReadMethod");
+            put(ReaderDisplayMessage.TRY_ANOTHER_CARD, "TryAnotherCard");
+        }};
+
+        sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE, (String)readerDisplayMessageToStringMap.get(readerDisplayMessage));
     }
 
     @Override
