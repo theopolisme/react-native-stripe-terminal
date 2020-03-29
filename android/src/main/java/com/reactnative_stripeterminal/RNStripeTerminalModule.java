@@ -760,16 +760,15 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @Override
     public void onRequestReaderDisplayMessage(@Nonnull ReaderDisplayMessage readerDisplayMessage) {
-        Map<String, String> readerDisplayMessageToStringMap = new HashMap<String, String>() {{
-            put(ReaderDisplayMessage.RETRY_CARD, "RetryCard");
-            put(ReaderDisplayMessage.INSERT_CARD, "InsertCard");
-            put(ReaderDisplayMessage.INSERT_OR_SWIPE_CARD, "InsertOrSwipeCard");
-            put(ReaderDisplayMessage.SWIPE_CARD, "SwipeCard");
-            put(ReaderDisplayMessage.REMOVE_CARD, "RemoveCard");
-            put(ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED, "MultipleContactlessCardsDetected");
-            put(ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD, "TryAnotherReadMethod");
-            put(ReaderDisplayMessage.TRY_ANOTHER_CARD, "TryAnotherCard");
-        }};
+        HashMap<String, String> readerDisplayMessageToStringMap = new HashMap<>();
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.RETRY_CARD, "RetryCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.INSERT_CARD, "InsertCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.INSERT_OR_SWIPE_CARD, "InsertOrSwipeCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.SWIPE_CARD, "SwipeCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.REMOVE_CARD, "RemoveCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED, "MultipleContactlessCardsDetected");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD, "TryAnotherReadMethod");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.TRY_ANOTHER_CARD, "TryAnotherCard");
 
         sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE, (String)readerDisplayMessageToStringMap.get(readerDisplayMessage));
     }
