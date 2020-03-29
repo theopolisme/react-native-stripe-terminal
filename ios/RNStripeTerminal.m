@@ -389,7 +389,7 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
     };
 
     [self sendEventWithName:@"didRequestReaderDisplayMessage"
-          body: @{@"text": SCPReaderDisplayMessageToStringMap[displayMessage]}];
+          body: SCPReaderDisplayMessageToStringMap[displayMessage]];
 }
 
 - (void)terminal:(SCPTerminal *)terminal didReportReaderEvent:(SCPReaderEvent)event info:(NSDictionary *)info {
