@@ -1,5 +1,5 @@
 import EventEmitter from 'eventemitter3';
-import { AsyncStorage } from 'react-native';
+import AsyncStorage from '@react-native-community/async-storage';
 
 export default function createConnectionService(StripeTerminal, options) {
   class STCS {
