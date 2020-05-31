@@ -5,7 +5,7 @@ import * as types from './types';
 
 const RNStripeTerminal: any = NativeModules.RNStripeTerminal;
 
-class StripeTerminal {
+export class StripeTerminal {
   // Device types
   DeviceTypeChipper2X = RNStripeTerminal.DeviceTypeChipper2X;
 
@@ -38,6 +38,29 @@ class StripeTerminal {
   ConnectionStatusConnecting = RNStripeTerminal.ConnectionStatusConnecting;
 
   listener: NativeEventEmitter;
+
+  addLogListener: any;
+  addReadersDiscoveredListener: any;
+  addReaderSoftwareUpdateProgressListener: any;
+  addDidRequestReaderInputListener: any;
+  addDidRequestReaderDisplayMessageListener: any;
+  addDidReportReaderEventListener: any;
+  addDidReportLowBatteryWarningListener: any;
+  addDidChangePaymentStatusListener: any;
+  addDidChangeConnectionStatusListener: any;
+  addDidReportUnexpectedReaderDisconnectListener: any;
+
+  removeLogListener: any;
+  removeReadersDiscoveredListener: any;
+  removeReaderSoftwareUpdateProgressListener: any;
+  removeDidRequestReaderInputListener: any;
+  removeDidRequestReaderDisplayMessageListener: any;
+  removeDidReportReaderEventListener: any;
+  removeDidReportLowBatteryWarningListener: any;
+  removeDidChangePaymentStatusListener: any;
+  removeDidChangeConnectionStatusListener: any;
+  removeDidReportUnexpectedReaderDisconnectListener: any;
+
   _currentService: any;
 
   // Fetch connection token. Overwritten in call to initialize
@@ -257,10 +280,10 @@ class StripeTerminal {
     });
   }
 
-  startService(options) {
-    if (typeof options === 'string') {
-      options = { policy: options };
-    }
+  startService(options: types.ServiceOptions) {
+    // if (typeof options === 'string') {
+    //   options = { policy: options };
+    // }
 
     if (this._currentService) {
       return Promise.reject(

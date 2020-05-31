@@ -3,7 +3,12 @@ import EventEmitter from 'eventemitter3';
 // @ts-ignore
 import AsyncStorage from '@react-native-community/async-storage';
 
-export default function createConnectionService(StripeTerminal, options) {
+import * as types from './types';
+
+export default function createConnectionService(
+  StripeTerminal: any,
+  options: types.ServiceOptions,
+) {
   class STCS {
     static StorageKey = '@STCS:persistedSerialNumber';
 
