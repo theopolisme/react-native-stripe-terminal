@@ -211,10 +211,11 @@ RCT_EXPORT_METHOD(installUpdate) {
 }
 
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
-    return @{
-             @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
-             @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
-             };
+    NSDictionary * updateDictionary = @{@"update" : @{
+        @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
+        @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
+    }};
+  return updateDictionary;
 }
 
 - (NSDictionary *)serializePaymentIntent:(SCPPaymentIntent *)intent {
@@ -293,7 +294,7 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
     SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
 
     NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
-    
+
     if (applicationFeeAmount) {
         params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
         params.onBehalfOf = options[@"onBehalfOf"];
