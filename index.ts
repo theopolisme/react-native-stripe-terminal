@@ -1,8 +1,9 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import createHooks from './hooks';
 import createConnectionService from './connectionService';
+import * as types from './types';
 
-const { RNStripeTerminal } = NativeModules;
+const RNStripeTerminal: any = NativeModules.RNStripeTerminal;
 
 class StripeTerminal {
   // Device types
@@ -35,6 +36,9 @@ class StripeTerminal {
   ConnectionStatusNotConnected = RNStripeTerminal.ConnectionStatusNotConnected;
   ConnectionStatusConnected = RNStripeTerminal.ConnectionStatusConnected;
   ConnectionStatusConnecting = RNStripeTerminal.ConnectionStatusConnecting;
+
+  listener: NativeEventEmitter;
+  _currentService: any;
 
   // Fetch connection token. Overwritten in call to initialize
   _fetchConnectionToken = () => Promise.reject('You must initialize RNStripeTerminal first.');
@@ -84,7 +88,7 @@ class StripeTerminal {
     });
   }
 
-  _wrapPromiseReturn(event, call, key) {
+  _wrapPromiseReturn(event, call, key?: string): Promise<any> {
     return new Promise((resolve, reject) => {
       const subscription = this.listener.addListener(event, (data) => {
         if (data && data.error) {
@@ -154,7 +158,7 @@ class StripeTerminal {
   getConnectedReader() {
     return this._wrapPromiseReturn('connectedReader', () => {
       RNStripeTerminal.getConnectedReader();
-    }).then((data) => (data.serialNumber ? data : null));
+    }).then((data: types.Reader) => (data.serialNumber ? data : null));
   }
 
   getConnectionStatus() {
@@ -282,7 +286,6 @@ class StripeTerminal {
 
 const StripeTerminal_ = new StripeTerminal();
 export default StripeTerminal_;
-
 export const {
   useStripeTerminalState,
   useStripeTerminalCreatePayment,

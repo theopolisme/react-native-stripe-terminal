@@ -1,4 +1,6 @@
+// @ts-ignore
 import EventEmitter from 'eventemitter3';
+// @ts-ignore
 import AsyncStorage from '@react-native-community/async-storage';
 
 export default function createConnectionService(StripeTerminal, options) {
@@ -23,6 +25,13 @@ export default function createConnectionService(StripeTerminal, options) {
     ];
 
     static DesiredReaderAny = 'any';
+
+    policy: string;
+    deviceType: string;
+    discoveryMode: string;
+    simulated: number;
+    emitter: EventEmitter;
+    desiredReader: null | string;
 
     constructor({ policy, deviceType, discoveryMode, simulated }) {
       this.policy = policy;
@@ -103,7 +112,7 @@ export default function createConnectionService(StripeTerminal, options) {
       this.connect();
     };
 
-    async connect(serialNumber) {
+    async connect(serialNumber?: string) {
       this.emitter.emit(STCS.EventLog, `Connecting to reader: "${serialNumber || 'any'}"...`);
 
       if (serialNumber) {
