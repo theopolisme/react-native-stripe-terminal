@@ -1,5 +1,5 @@
-import EventEmitter from "eventemitter3";
-import { AsyncStorage } from "react-native";
+import EventEmitter from 'eventemitter3';
+import { AsyncStorage } from 'react-native';
 
 export default function createConnectionService(StripeTerminal, options) {
   class STCS {
@@ -161,8 +161,7 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     async getPersistedReaderSerialNumber() {
-      const serialNumber = await AsyncStorage.getItem(STCS.StorageKey);
-      return serialNumber;
+      return await AsyncStorage.getItem(STCS.StorageKey);
     }
 
     async setPersistedReaderSerialNumber(serialNumber) {
@@ -201,6 +200,5 @@ export default function createConnectionService(StripeTerminal, options) {
   }
 
   const StripeTerminalConnectionService = STCS;
-  const service = new StripeTerminalConnectionService(options);
-  return service;
+  return new StripeTerminalConnectionService(options);
 }
