@@ -26,5 +26,14 @@
     "@react-native-community/async-storage": "^1.11.0",
     "react": "^16.9.0",
     "react-native": "^0.61.0"
+  },
+  "devDependencies": {
+    "prettier": "^2.0.5"
+  },
+  "dependencies": {
+    "babel-eslint": "^10.1.0",
+    "eslint": "^7.1.0",
+    "eslint-config-prettier": "^6.11.0",
+    "eslint-plugin-prettier": "^3.1.3"
   }
 }

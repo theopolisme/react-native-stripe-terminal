@@ -3,39 +3,36 @@ import AsyncStorage from '@react-native-community/async-storage';
 
 export default function createConnectionService(StripeTerminal, options) {
   class STCS {
-    static StorageKey = "@STCS:persistedSerialNumber";
+    static StorageKey = '@STCS:persistedSerialNumber';
 
-    static EventConnectionError = "connectionError";
-    static EventPersistedReaderNotFound = "persistedReaderNotFound";
-    static EventReadersDiscovered = "readersDiscovered";
-    static EventReaderPersisted = "readerPersisted";
-    static EventLog = "log";
+    static EventConnectionError = 'connectionError';
+    static EventPersistedReaderNotFound = 'persistedReaderNotFound';
+    static EventReadersDiscovered = 'readersDiscovered';
+    static EventReaderPersisted = 'readerPersisted';
+    static EventLog = 'log';
 
-    static PolicyAuto = "auto";
-    static PolicyPersist = "persist";
-    static PolicyManual = "manual";
-    static PolicyPersistManual = "persist-manual";
+    static PolicyAuto = 'auto';
+    static PolicyPersist = 'persist';
+    static PolicyManual = 'manual';
+    static PolicyPersistManual = 'persist-manual';
     static Policies = [
       STCS.PolicyAuto,
       STCS.PolicyPersist,
       STCS.PolicyManual,
-      STCS.PolicyPersistManual
+      STCS.PolicyPersistManual,
     ];
 
-    static DesiredReaderAny = "any";
+    static DesiredReaderAny = 'any';
 
     constructor({ policy, deviceType, discoveryMode, simulated }) {
       this.policy = policy;
       this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
-      this.discoveryMode =
-        discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
+      this.discoveryMode = discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
       this.simulated = simulated || 0;
 
       if (STCS.Policies.indexOf(policy) === -1) {
         throw new Error(
-          `Invalid policy passed to STCS: got "${policy}", expects "${STCS.Policies.join(
-            "|"
-          )}"`
+          `Invalid policy passed to STCS: got "${policy}", expects "${STCS.Policies.join('|')}"`,
         );
       }
 
@@ -43,12 +40,10 @@ export default function createConnectionService(StripeTerminal, options) {
       this.desiredReader = null;
 
       StripeTerminal.addReadersDiscoveredListener(this.onReadersDiscovered);
-      StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
-        this.onUnexpectedDisconnect
-      );
+      StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(this.onUnexpectedDisconnect);
     }
 
-    onReadersDiscovered = readers => {
+    onReadersDiscovered = (readers) => {
       this.emitter.emit(STCS.EventReadersDiscovered, readers);
 
       if (!readers.length) {
@@ -65,13 +60,9 @@ export default function createConnectionService(StripeTerminal, options) {
 
       // Auto-reconnect to "desired" reader, if one exists. This could happen
       // if the connection drops, for example. Or when restoring from memory.
-      const foundReader = readers.find(
-        r => r.serialNumber === this.desiredReader
-      );
+      const foundReader = readers.find((r) => r.serialNumber === this.desiredReader);
       if (foundReader) {
-        connectionPromise = StripeTerminal.connectReader(
-          foundReader.serialNumber
-        );
+        connectionPromise = StripeTerminal.connectReader(foundReader.serialNumber);
 
         // Otherwise, connect to best strength reader.
       } else if (
@@ -79,25 +70,20 @@ export default function createConnectionService(StripeTerminal, options) {
         (this.policy === STCS.PolicyPersist && !this.desiredReader) ||
         this.desiredReader === STCS.DesiredReaderAny
       ) {
-        connectionPromise = StripeTerminal.connectReader(
-          readers[0].serialNumber
-        );
+        connectionPromise = StripeTerminal.connectReader(readers[0].serialNumber);
       }
 
       // If a connection is in progress, save the connected reader.
       if (connectionPromise) {
         connectionPromise
-          .then(r => {
+          .then((r) => {
             this.desiredReader = r.serialNumber;
 
-            if (
-              this.policy === STCS.PolicyPersist ||
-              this.policy === STCS.PolicyPersistManual
-            ) {
+            if (this.policy === STCS.PolicyPersist || this.policy === STCS.PolicyPersistManual) {
               this.setPersistedReaderSerialNumber(this.desiredReader);
             }
           })
-          .catch(e => {
+          .catch((e) => {
             // If unable to connect, emit error & restart if in automatic mode.
             this.emitter.emit(STCS.EventConnectionError, e);
             if (this.policy !== STCS.PolicyManual) {
@@ -118,10 +104,7 @@ export default function createConnectionService(StripeTerminal, options) {
     };
 
     async connect(serialNumber) {
-      this.emitter.emit(
-        STCS.EventLog,
-        `Connecting to reader: "${serialNumber || "any"}"...`
-      );
+      this.emitter.emit(STCS.EventLog, `Connecting to reader: "${serialNumber || 'any'}"...`);
 
       if (serialNumber) {
         this.desiredReader = serialNumber;
@@ -139,27 +122,16 @@ export default function createConnectionService(StripeTerminal, options) {
 
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
-      return StripeTerminal.discoverReaders(
-        this.deviceType,
-        this.discoveryMode,
-        this.simulated,
-      );
+      return StripeTerminal.discoverReaders(this.deviceType, this.discoveryMode, this.simulated);
     }
 
     async discover() {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
-      return StripeTerminal.discoverReaders(
-        this.deviceType,
-        this.discoveryMode,
-        this.simulated,
-      );
+      return StripeTerminal.discoverReaders(this.deviceType, this.discoveryMode, this.simulated);
     }
 
     async disconnect() {
-      if (
-        this.policy === STCS.PolicyPersist ||
-        this.policy === STCS.PolicyPersistManual
-      ) {
+      if (this.policy === STCS.PolicyPersist || this.policy === STCS.PolicyPersistManual) {
         await this.setPersistedReaderSerialNumber(null);
         this.desiredReader = null;
       }
@@ -168,9 +140,7 @@ export default function createConnectionService(StripeTerminal, options) {
 
     async getReader() {
       const reader = await StripeTerminal.getConnectedReader();
-      return reader && reader.serialNumber === this.desiredReader
-        ? reader
-        : null;
+      return reader && reader.serialNumber === this.desiredReader ? reader : null;
     }
 
     addListener(event, handler) {
@@ -193,10 +163,7 @@ export default function createConnectionService(StripeTerminal, options) {
     async start() {
       if (this.policy === STCS.PolicyAuto) {
         this.connect();
-      } else if (
-        this.policy === STCS.PolicyPersist ||
-        this.policy === STCS.PolicyPersistManual
-      ) {
+      } else if (this.policy === STCS.PolicyPersist || this.policy === STCS.PolicyPersistManual) {
         const serialNumber = await this.getPersistedReaderSerialNumber();
         if (this.policy === STCS.PolicyPersist || serialNumber) {
           this.connect(serialNumber);
@@ -210,9 +177,7 @@ export default function createConnectionService(StripeTerminal, options) {
       await StripeTerminal.disconnectReader();
 
       StripeTerminal.removeReadersDiscoveredListener(this.onReadersDiscovered);
-      StripeTerminal.removeDidReportUnexpectedReaderDisconnectListener(
-        this.onUnexpectedDisconnect
-      );
+      StripeTerminal.removeDidReportUnexpectedReaderDisconnectListener(this.onUnexpectedDisconnect);
     }
   }
 
