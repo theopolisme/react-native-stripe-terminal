@@ -111,7 +111,7 @@ export class StripeTerminal {
     });
   }
 
-  _wrapPromiseReturn(event, call, key?: string): Promise<any> {
+  _wrapPromiseReturn = (event, call, key?: string): Promise<any> => {
     return new Promise((resolve, reject) => {
       const subscription = this.listener.addListener(event, (data) => {
         if (data && data.error) {
@@ -124,9 +124,9 @@ export class StripeTerminal {
 
       call();
     });
-  }
+  };
 
-  initialize({ fetchConnectionToken }) {
+  initialize = ({ fetchConnectionToken }) => {
     this._fetchConnectionToken = fetchConnectionToken;
     return new Promise((resolve, reject) => {
       if (Platform.OS === 'android') {
@@ -142,115 +142,101 @@ export class StripeTerminal {
         resolve();
       }
     });
-  }
+  };
 
-  discoverReaders(deviceType, method, simulated) {
-    return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
+  discoverReaders = (deviceType, method, simulated) =>
+    this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
       RNStripeTerminal.discoverReaders(deviceType, method, simulated);
     });
-  }
 
-  checkForUpdate() {
-    return this._wrapPromiseReturn(
+  checkForUpdate = () =>
+    this._wrapPromiseReturn(
       'updateCheck',
       () => {
         RNStripeTerminal.checkForUpdate();
       },
       'update',
     );
-  }
 
-  installUpdate() {
-    return this._wrapPromiseReturn('updateInstall', () => {
+  installUpdate = () =>
+    this._wrapPromiseReturn('updateInstall', () => {
       RNStripeTerminal.installUpdate();
     });
-  }
 
-  connectReader(serialNumber) {
-    return this._wrapPromiseReturn('readerConnection', () => {
+  connectReader = (serialNumber: string) =>
+    this._wrapPromiseReturn('readerConnection', () => {
       RNStripeTerminal.connectReader(serialNumber);
     });
-  }
 
-  disconnectReader() {
-    return this._wrapPromiseReturn('readerDisconnectCompletion', () => {
+  disconnectReader = () =>
+    this._wrapPromiseReturn('readerDisconnectCompletion', () => {
       RNStripeTerminal.disconnectReader();
     });
-  }
 
-  getConnectedReader() {
-    return this._wrapPromiseReturn('connectedReader', () => {
+  getConnectedReader = () =>
+    this._wrapPromiseReturn('connectedReader', () => {
       RNStripeTerminal.getConnectedReader();
     }).then((data: types.Reader) => (data.serialNumber ? data : null));
-  }
 
-  getConnectionStatus() {
-    return this._wrapPromiseReturn('connectionStatus', () => {
+  getConnectionStatus = () =>
+    this._wrapPromiseReturn('connectionStatus', () => {
       RNStripeTerminal.getConnectionStatus();
     });
-  }
 
-  getPaymentStatus() {
-    return this._wrapPromiseReturn('paymentStatus', () => {
+  getPaymentStatus = () =>
+    this._wrapPromiseReturn('paymentStatus', () => {
       RNStripeTerminal.getPaymentStatus();
     });
-  }
 
-  getLastReaderEvent() {
-    return this._wrapPromiseReturn('lastReaderEvent', () => {
+  getLastReaderEvent = () =>
+    this._wrapPromiseReturn('lastReaderEvent', () => {
       RNStripeTerminal.getLastReaderEvent();
     });
-  }
 
-  createPayment(options) {
-    return this._wrapPromiseReturn(
+  createPayment = (options: any) =>
+    this._wrapPromiseReturn(
       'paymentCreation',
       () => {
         RNStripeTerminal.createPayment(options);
       },
       'intent',
     );
-  }
 
-  createPaymentIntent(options) {
-    return this._wrapPromiseReturn(
+  createPaymentIntent = (options: any) =>
+    this._wrapPromiseReturn(
       'paymentIntentCreation',
       () => {
         RNStripeTerminal.createPaymentIntent(options);
       },
       'intent',
     );
-  }
 
-  retrievePaymentIntent(clientSecret) {
-    return this._wrapPromiseReturn(
+  retrievePaymentIntent = (clientSecret: string) =>
+    this._wrapPromiseReturn(
       'paymentIntentRetrieval',
       () => {
         RNStripeTerminal.retrievePaymentIntent(clientSecret);
       },
       'intent',
     );
-  }
 
-  collectPaymentMethod() {
-    return this._wrapPromiseReturn(
+  collectPaymentMethod = () =>
+    this._wrapPromiseReturn(
       'paymentMethodCollection',
       () => {
         RNStripeTerminal.collectPaymentMethod();
       },
       'intent',
     );
-  }
 
-  processPayment() {
-    return this._wrapPromiseReturn(
+  processPayment = () =>
+    this._wrapPromiseReturn(
       'paymentProcess',
       () => {
         RNStripeTerminal.processPayment();
       },
       'intent',
     );
-  }
 
   cancelPaymentIntent() {
     return this._wrapPromiseReturn(
@@ -262,23 +248,20 @@ export class StripeTerminal {
     );
   }
 
-  abortCreatePayment() {
-    return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
+  abortCreatePayment = () =>
+    this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
       RNStripeTerminal.abortCreatePayment();
     });
-  }
 
-  abortDiscoverReaders() {
-    return this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
+  abortDiscoverReaders = () =>
+    this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
       RNStripeTerminal.abortDiscoverReaders();
     });
-  }
 
-  abortInstallUpdate() {
-    return this._wrapPromiseReturn('abortInstallUpdateCompletion', () => {
+  abortInstallUpdate = () =>
+    this._wrapPromiseReturn('abortInstallUpdateCompletion', () => {
       RNStripeTerminal.abortInstallUpdate();
     });
-  }
 
   startService(options: types.ServiceOptions) {
     // if (typeof options === 'string') {
