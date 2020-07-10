@@ -760,9 +760,17 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @Override
     public void onRequestReaderDisplayMessage(@Nonnull ReaderDisplayMessage readerDisplayMessage) {
-        WritableMap displayMessageMap = Arguments.createMap();
-        displayMessageMap.putString(TEXT,readerDisplayMessage.toString());
-        sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE,displayMessageMap);
+        HashMap<ReaderDisplayMessage, String> readerDisplayMessageToStringMap = new HashMap<>();
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.RETRY_CARD, "RetryCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.INSERT_CARD, "InsertCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.INSERT_OR_SWIPE_CARD, "InsertOrSwipeCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.SWIPE_CARD, "SwipeCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.REMOVE_CARD, "RemoveCard");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.MULTIPLE_CONTACTLESS_CARDS_DETECTED, "MultipleContactlessCardsDetected");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.TRY_ANOTHER_READ_METHOD, "TryAnotherReadMethod");
+        readerDisplayMessageToStringMap.put(ReaderDisplayMessage.TRY_ANOTHER_CARD, "TryAnotherCard");
+
+        sendEventWithName(EVENT_DID_REQUEST_READER_DISPLAY_MESSAGE, (String)readerDisplayMessageToStringMap.get(readerDisplayMessage));
     }
 
     @Override

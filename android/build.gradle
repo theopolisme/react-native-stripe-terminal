@@ -42,5 +42,5 @@ repositories {
 
 dependencies {
   implementation "com.facebook.react:react-native:+"
-  implementation "com.stripe:stripeterminal:1.0.0"
+  implementation "com.stripe:stripeterminal:+"
 }
