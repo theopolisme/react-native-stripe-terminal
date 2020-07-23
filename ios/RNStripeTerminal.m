@@ -282,6 +282,11 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
             params.onBehalfOf = options[@"onBehalfOf"];
             params.transferDataDestination = options[@"transferDataDestination"];
         }
+        params.metadata = [RCTConvert NSDictionary:options[@"metadata"]];
+        params.stripeDescription = [RCTConvert NSString:options[@"description"]];
+        params.statementDescriptor = [RCTConvert NSString:options[@"statementDescriptor"]];
+        params.receiptEmail = [RCTConvert NSString:options[@"receiptEmail"]];
+        params.customer = [RCTConvert NSString:options[@"customer"]];
 
         [SCPTerminal.shared createPaymentIntent:params completion:onIntent];
     }
@@ -300,6 +305,11 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
         params.onBehalfOf = options[@"onBehalfOf"];
         params.transferDataDestination = options[@"transferDataDestination"];
     }
+    params.metadata = [RCTConvert NSDictionary:options[@"metadata"]];
+    params.stripeDescription = [RCTConvert NSString:options[@"description"]];
+    params.statementDescriptor = [RCTConvert NSString:options[@"statementDescriptor"]];
+    params.receiptEmail = [RCTConvert NSString:options[@"receiptEmail"]];
+    params.customer = [RCTConvert NSString:options[@"customer"]];
 
     [SCPTerminal.shared createPaymentIntent:params completion:^(SCPPaymentIntent * _Nullable intent_, NSError * _Nullable error) {
         intent = intent_;
