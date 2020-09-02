@@ -374,10 +374,10 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
                 HashMap<String, String> metaDataMap = new HashMap<>();
 
                 if (map != null) {
-                    ReadableMapKeySetIterator iterator = options.keySetIterator();
+                    ReadableMapKeySetIterator iterator = map.keySetIterator();
                     while (iterator.hasNextKey()) {
                         String key = iterator.nextKey();
-                        String val = options.getString(key);
+                        String val = map.getString(key);
                         metaDataMap.put(key, val);
                     }
                 }
