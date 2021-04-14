@@ -166,7 +166,7 @@ export default function createHooks(StripeTerminal) {
       return () => {
         listeners.forEach(l => l.remove())
       };
-    }, []);
+    }, [service]);
 
     return {
       ...state,
