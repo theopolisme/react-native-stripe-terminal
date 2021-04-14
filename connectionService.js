@@ -171,7 +171,12 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     addListener(event, handler) {
-      return this.emitter.addListener(event, handler);
+      this.emitter.addListener(event, handler)
+      return {
+        remove: () => {
+          this.emitter.removeListener(event, handler);
+        }
+      };
     }
 
     async getPersistedReaderSerialNumber() {
