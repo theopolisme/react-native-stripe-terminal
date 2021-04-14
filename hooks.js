@@ -157,14 +157,14 @@ export default function createHooks(StripeTerminal) {
       const readerPersisted = serialNumber => setPersistedReaderSerialNumber(serialNumber)
 
       // Setup listeners
-      service.listener.addListener('readersDiscovered', readerDiscovered),
-      service.listener.addListener('readerPersisted', readerPersisted)
+      service.addReadersDiscoveredListener(readerDiscovered),
+      service.addReaderPersistedListener(readerPersisted)
 
       // Cleanup: remove listeners
       return () => {
 
-        service.listener.removeListener('readersDiscovered', readerDiscovered),
-        service.listener.removeListener('readerPersisted', readerPersisted)
+        service.removeReadersDiscoveredListener(readerDiscovered),
+        service.removeReaderPersistedListener(readerPersisted)
       };
     }, []);
 
