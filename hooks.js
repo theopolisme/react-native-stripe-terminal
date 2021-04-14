@@ -162,6 +162,8 @@ export default function createHooks(StripeTerminal) {
         service.addListener('readerPersisted', readerPersisted)
       ];
 
+      console.log("I HATE THIS", listeners)
+
       // Cleanup: remove listeners
       return () => {
         listeners.forEach(l => l.remove())
