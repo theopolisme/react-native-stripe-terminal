@@ -64,6 +64,7 @@ class StripeTerminal {
       'readersDiscovered',
       'readerSoftwareUpdateProgress',
       'didRequestReaderInput',
+      'didRequestReaderInputPrompt',
       'didRequestReaderDisplayMessage',
       'didReportReaderEvent',
       'didReportLowBatteryWarning',
