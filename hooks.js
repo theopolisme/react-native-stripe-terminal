@@ -31,7 +31,7 @@ export default function createHooks(StripeTerminal) {
 
       // Cleanup: remove listeners
       return () => {
-        listeners.forEach(l => l.removeListener());
+        listeners.forEach(l => l.remove());
       };
     }, []);
 
@@ -153,7 +153,7 @@ export default function createHooks(StripeTerminal) {
 
       // Cleanup: remove listeners
       return () => {
-        listeners.forEach(l => l.removeListener());
+        listeners.forEach(l => l.remove());
       };
     }, []);
 
