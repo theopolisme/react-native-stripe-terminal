@@ -158,7 +158,7 @@ export default function createHooks(StripeTerminal) {
 
       // Setup listeners
       service.listener.addListener('readersDiscovered', readerDiscovered),
-      service.listener..addListener('readerPersisted', readerPersisted)
+      service.listener.addListener('readerPersisted', readerPersisted)
 
       // Cleanup: remove listeners
       return () => {
