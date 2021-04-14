@@ -139,8 +139,10 @@ export default function createConnectionService(StripeTerminal, options) {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
 
-      await this.setPersistedReaderSerialNumber(serialNumber);
-      StripeTerminal.connectReader(serialNumber)
+      if (serialNumber) {
+        await this.setPersistedReaderSerialNumber(serialNumber);
+        StripeTerminal.connectReader(serialNumber)
+      }
     }
 
     async discover() {
