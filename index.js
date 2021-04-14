@@ -62,7 +62,6 @@ class StripeTerminal {
     this._createListeners([
       'log',
       'readersDiscovered',
-      'readerPersisted',
       'readerSoftwareUpdateProgress',
       'didRequestReaderInput',
       'didRequestReaderInputPrompt',
