@@ -18,6 +18,7 @@ export default function createHooks(StripeTerminal) {
       StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
 
       const didChangeConnectionStatus = ({ status }) => {
+        console.log("didChangeConnectionStatus", status)
         setConnectionStaus(status);
         StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
       };
@@ -27,19 +28,19 @@ export default function createHooks(StripeTerminal) {
       const didRequestReaderInput = ({ text }) => setReaderInputPrompt(text);
 
       // Setup listeners
-      StripeTerminal.addDidChangeConnectionStatusListener(didChangeConnectionStatus),
-      StripeTerminal.addDidChangePaymentStatusListener(didChangePaymentStatus),
-      StripeTerminal.addDidReportReaderEventListener(didReportReaderEvent),
-      StripeTerminal.addDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput),
-      StripeTerminal.addDidRequestReaderInputListener(didRequestReaderInput)
+      StripeTerminal.addDidChangeConnectionStatusListener(didChangeConnectionStatus);
+      StripeTerminal.addDidChangePaymentStatusListener(didChangePaymentStatus);
+      StripeTerminal.addDidReportReaderEventListener(didReportReaderEvent);
+      StripeTerminal.addDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput);
+      StripeTerminal.addDidRequestReaderInputListener(didRequestReaderInput);
 
       // Cleanup: remove listeners
       return () => {
-        StripeTerminal.removeDidChangeConnectionStatusListener(didChangeConnectionStatus),
-        StripeTerminal.removeDidChangePaymentStatusListener(didChangePaymentStatus),
-        StripeTerminal.removeDidReportReaderEventListener(didReportReaderEvent),
-        StripeTerminal.removeDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput),
-        StripeTerminal.removeDidRequestReaderInputListener(didRequestReaderInput)
+        StripeTerminal.removeDidChangeConnectionStatusListener(didChangeConnectionStatus);
+        StripeTerminal.removeDidChangePaymentStatusListener(didChangePaymentStatus);
+        StripeTerminal.removeDidReportReaderEventListener(didReportReaderEvent);
+        StripeTerminal.removeDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput);
+        StripeTerminal.removeDidRequestReaderInputListener(didRequestReaderInput);
       };
     }, []);
 
