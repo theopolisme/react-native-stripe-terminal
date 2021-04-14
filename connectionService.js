@@ -133,16 +133,12 @@ export default function createConnectionService(StripeTerminal, options) {
       // (This state can occur when hot-reloading, for example.)
       const currentReader = await this.getReader();
       if (currentReader) {
-        return;
+        return Promise.resolve();
       }
 
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
-
-      if (serialNumber) {
-        await this.setPersistedReaderSerialNumber(serialNumber);
-        StripeTerminal.connectReader(serialNumber)
-      }
+      return StripeTerminal.connectReader(serialNumber);
     }
 
     async discover() {
