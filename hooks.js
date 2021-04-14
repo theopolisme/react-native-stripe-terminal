@@ -29,6 +29,8 @@ export default function createHooks(StripeTerminal) {
         StripeTerminal.addDidRequestReaderInputListener(({ text }) => setReaderInputPrompt(text))
       ];
 
+      console.log("LISTENERS", listeners);
+
       // Cleanup: remove listeners
       return () => {
         listeners.forEach(l => l.remove());
