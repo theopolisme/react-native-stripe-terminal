@@ -17,23 +17,29 @@ export default function createHooks(StripeTerminal) {
       StripeTerminal.getLastReaderEvent().then(e => setLastReaderEvent(e));
       StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
 
-      // Setup listeners
-      const listeners = [
-        StripeTerminal.addDidChangeConnectionStatusListener(({ status }) => {
-          setConnectionStaus(status);
-          StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
-        }),
-        StripeTerminal.addDidChangePaymentStatusListener(({ status }) => setPaymentStatus(status)),
-        StripeTerminal.addDidReportReaderEventListener(({ event }) => setLastReaderEvent(event)),
-        StripeTerminal.addDidBeginWaitingForReaderInputListener(({ text }) => setReaderInputOptions(text)),
-        StripeTerminal.addDidRequestReaderInputListener(({ text }) => setReaderInputPrompt(text))
-      ];
+      const didChangeConnectionStatus = ({ status }) => {
+        setConnectionStaus(status);
+        StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
+      };
+      const didChangePaymentStatus = ({ status }) => setPaymentStatus(status);
+      const didReportReaderEvent = ({ event }) => setLastReaderEvent(event);
+      const didBeginWaitingForReaderInput = ({ text }) => setReaderInputOptions(text);
+      const didRequestReaderInput = ({ text }) => setReaderInputPrompt(text);
 
-      console.log("LISTENERS", listeners);
+      // Setup listeners
+      StripeTerminal.addDidChangeConnectionStatusListener(didChangeConnectionStatus),
+      StripeTerminal.addDidChangePaymentStatusListener(didChangePaymentStatus),
+      StripeTerminal.addDidReportReaderEventListener(didReportReaderEvent),
+      StripeTerminal.addDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput),
+      StripeTerminal.addDidRequestReaderInputListener(didRequestReaderInput)
 
       // Cleanup: remove listeners
       return () => {
-        listeners.forEach(l => l.remove());
+        StripeTerminal.removeDidChangeConnectionStatusListener(didChangeConnectionStatus),
+        StripeTerminal.removeDidChangePaymentStatusListener(didChangePaymentStatus),
+        StripeTerminal.removeDidReportReaderEventListener(didReportReaderEvent),
+        StripeTerminal.removeDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput),
+        StripeTerminal.removeDidRequestReaderInputListener(didRequestReaderInput)
       };
     }, []);
 
@@ -147,15 +153,18 @@ export default function createHooks(StripeTerminal) {
       // Populate initial values
       service.getPersistedReaderSerialNumber().then(s => setPersistedReaderSerialNumber(s));
 
+      const readerDiscovered = readers => setReadersAvailable(readers)
+      const readerPersisted = serialNumber => setPersistedReaderSerialNumber(serialNumber)
+
       // Setup listeners
-      const listeners = [
-        service.addListener('readersDiscovered', readers => setReadersAvailable(readers)),
-        service.addListener('readerPersisted', serialNumber => setPersistedReaderSerialNumber(serialNumber))
-      ];
+      service.addListener('readersDiscovered', readerDiscovered),
+      service.addListener('readerPersisted', readerPersisted)
 
       // Cleanup: remove listeners
       return () => {
-        listeners.forEach(l => l.remove());
+
+        service.removeListener('readersDiscovered', readerDiscovered),
+        service.removeListener('readerPersisted', readerPersisted)
       };
     }, []);
 
