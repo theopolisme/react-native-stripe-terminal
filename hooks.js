@@ -18,7 +18,6 @@ export default function createHooks(StripeTerminal) {
       StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
 
       const didChangeConnectionStatus = ({ status }) => {
-        console.log("didChangeConnectionStatus", status)
         setConnectionStaus(status);
         StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
       };

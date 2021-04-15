@@ -256,9 +256,7 @@ class StripeTerminal {
     }
 
     if (this._currentService) {
-      return Promise.reject(
-        'A service is already running. You must stop it using `stopService` before starting a new service.',
-      );
+      return this._currentService;
     }
 
     this._currentService = createConnectionService(this, options);

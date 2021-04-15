@@ -51,7 +51,6 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     onReadersDiscovered = readers => {
-      console.log("DISCOVERING", this);
       this.emitter.emit(STCS.EventReadersDiscovered, readers);
 
       if (!readers.length) {
