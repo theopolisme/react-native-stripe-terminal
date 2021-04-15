@@ -42,7 +42,7 @@ export default function createConnectionService(StripeTerminal, options) {
       this.desiredReader = null;
 
       this.onReadersDiscovered = this.onReadersDiscovered.bind(this);
-      this.this.onUnexpectedDisconnect = this.onUnexpectedDisconnect.bind(this);
+      this.onUnexpectedDisconnect = this.onUnexpectedDisconnect.bind(this);
 
       StripeTerminal.addReadersDiscoveredListener(this.onReadersDiscovered);
       StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
