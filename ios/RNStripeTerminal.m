@@ -385,7 +385,7 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 RCT_EXPORT_METHOD(readReusableCard) {
     SCPReadReusableCardParameters *params = [SCPReadReusableCardParameters new];
     pendingReadPaymentMethod = [[SCPTerminal shared] readReusableCard:params delegate:self completion:^(SCPPaymentMethod *readResult, NSError *error) {
-        pendingReadPaymentMethod = nil
+        pendingReadPaymentMethod = nil;
         if (error) {
             [self sendEventWithName:@"readReusableCard" body:@{
                                                                     @"error": [error localizedDescription],
