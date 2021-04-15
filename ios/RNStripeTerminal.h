@@ -18,6 +18,7 @@
     SCPReader *reader;
     SCPPaymentIntent *intent;
     SCPReaderSoftwareUpdate *update;
+    SCPCancelable *pendingReadPaymentMethod;
     SCPCancelable *pendingCreatePaymentIntent;
     SCPCancelable *pendingDiscoverReaders;
     SCPCancelable *pendingInstallUpdate;
@@ -26,3 +27,4 @@
 }
 
 @end
+

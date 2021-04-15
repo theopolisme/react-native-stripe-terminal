@@ -59,6 +59,57 @@ export default function createHooks(StripeTerminal) {
     };
   }
 
+  function useStripeTerminalReadPaymentMethod() {
+    const {
+      cardInserted,
+    } = useStripeTerminalState();
+
+    const [isCompleted, setIsCompleted] = useState(true);
+    const [paymentMethod, setPaymentMethod] = useState(null);
+    const [error, setError] = useState(null);
+    const [isReading, setIsReading] = useState(false);
+
+    useEffect(() => {
+      if (isCompleted && !cardInserted) {
+        setIsCompleted(false);
+        StripeTerminal.readReusableCard()
+          .then(method => {
+            setError(null);
+            setPaymentMethod(method);
+            setIsReading(false)
+            setIsCompleted(true)
+          }).catch(({ error }) => {
+            setPaymentMethod(null);
+            setError(error);
+            StripeTerminal.abortReadPaymentMethod().finally(() => {
+              setIsReading(false)
+              setIsCompleted(true)
+            })
+          })
+      }
+      if (!isCompleted && cardInserted) {
+        setIsReading(true);
+      }
+    }, [
+    cardInserted,
+      isReading,
+      setIsReading,
+      isCompleted,
+      setIsCompleted,
+      setError,
+      setPaymentMethod
+  ]);
+
+    return {
+      error,
+      isReading,
+      isCompleted,
+      paymentMethod,
+      cardInserted,
+    }
+
+  }
+
   function useStripeTerminalCreatePayment({ onSuccess, onFailure, onCapture, autoRetry, ...options }) {
     const {
       connectionStatus,
@@ -190,6 +241,7 @@ export default function createHooks(StripeTerminal) {
   return {
     useStripeTerminalState,
     useStripeTerminalCreatePayment,
-    useStripeTerminalConnectionManager
+    useStripeTerminalConnectionManager,
+    useStripeTerminalReadPaymentMethod
   };
 }

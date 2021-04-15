@@ -232,6 +232,13 @@ class StripeTerminal {
     );
   }
 
+  readReusableCard() {
+    return this._wrapPromiseReturn('readReusableCard', () => {
+      RNStripeTerminal.readReusableCard();
+    },
+    'method')
+  }
+
   abortCreatePayment() {
     return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
       RNStripeTerminal.abortCreatePayment();
@@ -247,6 +254,12 @@ class StripeTerminal {
   abortInstallUpdate() {
     return this._wrapPromiseReturn('abortInstallUpdateCompletion', () => {
       RNStripeTerminal.abortInstallUpdate();
+    })
+  }
+
+  abortReadPaymentMethod() {
+    return this._wrapPromiseReturn('abortReadPaymentMethod', () => {
+      RNStripeTerminal.abortReadPaymentMethod();
     })
   }
 
@@ -281,5 +294,6 @@ export default StripeTerminal_;
 export const {
   useStripeTerminalState,
   useStripeTerminalCreatePayment,
+  useStripeTerminalReadPaymentMethod,
   useStripeTerminalConnectionManager,
 } = createHooks(StripeTerminal_);

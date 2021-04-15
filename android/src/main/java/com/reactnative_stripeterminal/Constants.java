@@ -41,6 +41,8 @@ public class Constants {
     public static final String EVENT_UPDATE_INSTALL = "updateInstall";
     public static final String EVENT_ABORT_INSTALL_COMPLETION = "abortInstallUpdateCompletion";
     public static final String EVENT_ABORT_CREATE_PAYMENT_COMPLETION = "abortCreatePaymentCompletion";
+    public static final String EVENT_ABORT_READ_PAYMENT_METHOD = "abortReadPaymentMethod";
+    public static final String EVENT_READ_RESUSABLE_CARD = "readReusableCard";
 
     //JSON keys
     public static final String ERROR ="error";
@@ -60,6 +62,13 @@ public class Constants {
     public static final String STRIPE_ID = "stripeId";
     public static final String CREATED = "created";
     public static final String METADATA ="metadata";
+    public static final String LAST4 ="last4";
+    public static final String EXP_MONTH ="expMonth";
+    public static final String EXP_YEAR ="expYear";
+    public static final String FUNDING ="funding";
+    public static final String BRAND ="brand";
+    public static final String TYPE ="type";
+    public static final String METHOD="method";
     public static final String INTENT="intent";
     public static final String DECLINE_CODE = "declineCode";
     public static final String ESTIMATED_UPDATE_TIME = "estimatedUpdateTime";
@@ -93,3 +102,4 @@ public class Constants {
         constants.put("ConnectionStatusConnecting",ConnectionStatus.CONNECTING.ordinal());
     }
 }
+
