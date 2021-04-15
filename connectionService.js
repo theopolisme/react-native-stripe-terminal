@@ -133,6 +133,7 @@ export default function createConnectionService(StripeTerminal, options) {
       // (This state can occur when hot-reloading, for example.)
       const currentReader = await this.getReader();
       if (currentReader) {
+        console.log("STOPPING SHORT")
         return Promise.resolve();
       }
 
