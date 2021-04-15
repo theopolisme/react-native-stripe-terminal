@@ -42,7 +42,7 @@ export default function createConnectionService(StripeTerminal, options) {
       this.desiredReader = null;
 
       this.onReadersDiscovered = this.onReadersDiscovered.bind(this);
-      this.this.onUnexpectedDisconnect = this.this.onUnexpectedDisconnect.bind(this);
+      this.this.onUnexpectedDisconnect = this.onUnexpectedDisconnect.bind(this);
 
       StripeTerminal.addReadersDiscoveredListener(this.onReadersDiscovered);
       StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
@@ -137,7 +137,6 @@ export default function createConnectionService(StripeTerminal, options) {
       // (This state can occur when hot-reloading, for example.)
       const currentReader = await this.getReader();
       if (currentReader) {
-        console.log("STOPPING SHORT")
         return Promise.resolve();
       }
 
@@ -176,10 +175,11 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     addListener(event, handler) {
-      this.emitter.addListener(event, handler)
+      const emitter = this.emitter;
+      emitter.addListener(event, handler)
       return {
         remove: () => {
-          this.emitter.removeListener(event, handler);
+          emitter.removeListener(event, handler);
         }
       };
     }
