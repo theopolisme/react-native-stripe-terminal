@@ -167,7 +167,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         paymentMethodMap.putInt(EXP_MONTH, paymentMethod.getCardDetails().getExpMonth());
         paymentMethodMap.putInt(EXP_YEAR, paymentMethod.getCardDetails().getExpYear());
         paymentMethodMap.putString(BRAND, paymentMethod.getCardDetails().getBrand());
-        paymentMethodMap.putString(BRAND, paymentMethod.getCardDetails().getBrand());
         return paymentMethodMap;
     }
 
