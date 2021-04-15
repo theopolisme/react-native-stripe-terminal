@@ -41,6 +41,9 @@ export default function createConnectionService(StripeTerminal, options) {
       this.emitter = new EventEmitter();
       this.desiredReader = null;
 
+      this.onReadersDiscovered = this.onReadersDiscovered.bind(this);
+      this.this.onUnexpectedDisconnect = this.this.onUnexpectedDisconnect.bind(this);
+
       StripeTerminal.addReadersDiscoveredListener(this.onReadersDiscovered);
       StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
         this.onUnexpectedDisconnect
@@ -48,6 +51,7 @@ export default function createConnectionService(StripeTerminal, options) {
     }
 
     onReadersDiscovered = readers => {
+      console.log("DISCOVERING", this);
       this.emitter.emit(STCS.EventReadersDiscovered, readers);
 
       if (!readers.length) {
