@@ -127,7 +127,7 @@ class StripeTerminal {
   checkForUpdate() {
     return this._wrapPromiseReturn('updateCheck', () => {
       RNStripeTerminal.checkForUpdate();
-    }, 'update')
+    })
   }
 
   installUpdate() {

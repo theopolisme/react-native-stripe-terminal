@@ -67,42 +67,33 @@ export default function createHooks(StripeTerminal) {
     const [isCompleted, setIsCompleted] = useState(true);
     const [paymentMethod, setPaymentMethod] = useState(null);
     const [error, setError] = useState(null);
-    const [isReading, setIsReading] = useState(false);
+    const busyError = "Could not execute readReusableCard because the SDK is busy with another command: readReusableCard.";
 
     useEffect(() => {
       if (isCompleted && !cardInserted) {
         setIsCompleted(false);
         StripeTerminal.readReusableCard()
-          .then(method => {
-            setError(null);
-            setPaymentMethod(method);
-            setIsReading(false)
-            setIsCompleted(true)
-          }).catch(({ error }) => {
-            setPaymentMethod(null);
-            setError(error);
-            StripeTerminal.abortReadPaymentMethod().finally(() => {
-              setIsReading(false)
-              setIsCompleted(true)
-            })
-          })
-      }
-      if (!isCompleted && cardInserted) {
-        setIsReading(true);
+        .then(method => {
+          setError(null);
+          setPaymentMethod(method);
+          setIsCompleted(true)
+          return null;
+        }).catch(({ error }) => {
+          setPaymentMethod(null);
+          setError(error);
+          setIsCompleted(true);
+          return null;
+        }).finally(() => {
+          StripeTerminal.abortReadPaymentMethod
+        });
       }
     }, [
-    cardInserted,
-      isReading,
-      setIsReading,
+      cardInserted,
       isCompleted,
-      setIsCompleted,
-      setError,
-      setPaymentMethod
   ]);
 
     return {
       error,
-      isReading,
       isCompleted,
       paymentMethod,
       cardInserted,
@@ -230,10 +221,10 @@ export default function createHooks(StripeTerminal) {
       },
       discoverReaders: () => {
         setManagerConnectionStatus(ConnectionManagerStatusScanning);
-        service.discover();
+        return service.discover();
       },
       disconnectReader: () => {
-        service.disconnect();
+        return service.disconnect();
       }
     };
   }
