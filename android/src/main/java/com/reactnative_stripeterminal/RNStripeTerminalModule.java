@@ -172,10 +172,13 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @ReactMethod
     public void discoverReaders(int deviceType, int method, int simulated) {
+        if (!Terminal.isInitialized()) {
+            return;
+        }
         boolean isSimulated = simulated == 0?false:true;
         try {
             DeviceType devType = DeviceType.values()[deviceType];
-            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, devType, isSimulated);
+            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration();
             Callback statusCallback = new Callback() {
 
                 @Override
@@ -195,7 +198,9 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             };
 
             abortDiscoverReaders();
-            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, this, statusCallback);
+            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, readers -> {
+                onUpdateDiscoveredReaders(readers);
+            }, statusCallback);
 
         }catch (Exception e){
             e.printStackTrace();
@@ -210,7 +215,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @ReactMethod
     public void initialize(com.facebook.react.bridge.Callback callback) {
-        try {
+        /*try {
             //Check if stripe is initialized
             Terminal.getInstance();
 
@@ -218,7 +223,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             writableMap.putBoolean("isInitialized", true);
             callback.invoke(writableMap);
             return;
-        }catch (IllegalStateException e){ }
+        }catch (IllegalStateException e){ }*/
 
         pendingConnectionTokenCallback = null;
         abortDiscoverReaders();
@@ -231,7 +236,9 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         String err = "";
         boolean isInit =false;
         try {
-            Terminal.initTerminal(getContext().getApplicationContext(), logLevel, tokenProvider, terminalListener);
+            if (!Terminal.isInitialized()) {
+                Terminal.initTerminal(getCurrentActivity(), logLevel, tokenProvider, terminalListener);
+            }
             lastReaderEvent = ReaderEvent.CARD_REMOVED;
             isInit = true;
         } catch (TerminalException e) {
@@ -617,6 +624,9 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @ReactMethod
     public void abortDiscoverReaders(){
+        if (!Terminal.isInitialized()) {
+            return;
+        }
         if(pendingDiscoverReaders!=null && !pendingDiscoverReaders.isCompleted()){
             pendingDiscoverReaders.cancel(new Callback() {
                 @Override
@@ -830,3 +840,4 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         sendEventWithName(EVENT_READER_SOFTWARE_UPDATE_PROGRESS,new Float(v));
     }
 }
+
