@@ -198,9 +198,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             };
 
             abortDiscoverReaders();
-            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, readers -> {
-                onUpdateDiscoveredReaders(readers);
-            }, statusCallback);
+            pendingDiscoverReaders = Terminal.getInstance().discoverReaders(discoveryConfiguration, this, statusCallback);
 
         }catch (Exception e){
             e.printStackTrace();
