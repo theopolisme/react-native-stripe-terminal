@@ -2,3 +2,7 @@
 # yarn lockfile v1
 
 
+cancelable-promise@^4.0.0:
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/cancelable-promise/-/cancelable-promise-4.0.0.tgz#1f488e917b595d64ab392fa38afdcd6e1cb9f536"
+  integrity sha512-TdOV9wDAvG7ZPRgcNdDSVVaN5EF0h5RWRKwN5wGu1JGfhe5BPO2RSrTAIWXQZDYxZf9NCu4ocTDBsui29A4mMQ==

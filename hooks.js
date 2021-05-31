@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from "react";
+import { cancelable } from 'cancelable-promise';
+
 
 export default function createHooks(StripeTerminal) {
 
@@ -12,14 +14,16 @@ export default function createHooks(StripeTerminal) {
 
     useEffect(() => {
       // Populate initial values
-      StripeTerminal.getConnectionStatus().then(s => setConnectionStaus(s));
-      StripeTerminal.getPaymentStatus().then(s => setPaymentStatus(s));
-      StripeTerminal.getLastReaderEvent().then(e => setLastReaderEvent(e));
-      StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
+      const p1 = cancelable(StripeTerminal.getConnectionStatus())
+        p1.then(s => setConnectionStaus(s));
+      const p2 = cancelable(StripeTerminal.getPaymentStatus().then(s => setPaymentStatus(s)));
+      const p3 = cancelable(StripeTerminal.getLastReaderEvent().then(e => setLastReaderEvent(e)));
+      const p4 = cancelable(StripeTerminal.getConnectedReader().then(r => setConnectedReader(r)));
 
+      let p5 = null;
       const didChangeConnectionStatus = ({ status }) => {
         setConnectionStaus(status);
-        StripeTerminal.getConnectedReader().then(r => setConnectedReader(r));
+        p5 = cancelable(StripeTerminal.getConnectedReader().then(r => setConnectedReader(r)));
       };
       const didChangePaymentStatus = ({ status }) => setPaymentStatus(status);
       const didReportReaderEvent = ({ event }) => setLastReaderEvent(event);
@@ -40,6 +44,13 @@ export default function createHooks(StripeTerminal) {
         StripeTerminal.removeDidReportReaderEventListener(didReportReaderEvent);
         StripeTerminal.removeDidBeginWaitingForReaderInputListener(didBeginWaitingForReaderInput);
         StripeTerminal.removeDidRequestReaderInputListener(didRequestReaderInput);
+        p1.cancel();
+        p2.cancel();
+        p3.cancel();
+        p4.cancel();
+        if (!!p5) {
+          p5.cancel();
+        }
       };
     }, []);
 
@@ -70,27 +81,39 @@ export default function createHooks(StripeTerminal) {
     const busyError = "Could not execute readReusableCard because the SDK is busy with another command: readReusableCard.";
 
     useEffect(() => {
+      let p1;
       if (isCompleted && !cardInserted) {
         setIsCompleted(false);
-        StripeTerminal.readReusableCard()
-        .then(method => {
-          setError(null);
-          setPaymentMethod(method);
-          setIsCompleted(true)
-          return null;
-        }).catch(({ error }) => {
-          setPaymentMethod(null);
-          setError(error);
-          setIsCompleted(true);
-          return null;
-        }).finally(() => {
-          StripeTerminal.abortReadPaymentMethod
-        });
+        p1 = cancelable(StripeTerminal.readReusableCard()
+          .then(method => {
+            setError(null);
+            setPaymentMethod(method);
+            setIsCompleted(true)
+            return null;
+          }).catch(({ error }) => {
+            setPaymentMethod(null);
+            setError(error);
+            setIsCompleted(true);
+            return null;
+          }).finally(() => {
+            StripeTerminal.abortReadPaymentMethod();
+          }));
+      }
+      return () => {
+        if (!!p1) {
+          p1.cancel();
+        }
       }
     }, [
-      cardInserted,
       isCompleted,
-  ]);
+      cardInserted
+    ]);
+
+    useEffect(() => {
+      return () => {
+        StripeTerminal.abortReadPaymentMethod();
+      }
+    }, [])
 
     return {
       error,
@@ -193,8 +216,8 @@ export default function createHooks(StripeTerminal) {
 
     useEffect(() => {
       // Populate initial values
-      service.getPersistedReaderSerialNumber().then(s => setPersistedReaderSerialNumber(s));
-
+      const p1 = cancelable(service.getPersistedReaderSerialNumber()
+      .then(s => setPersistedReaderSerialNumber(s)));
       const readerDiscovered = readers => setReadersAvailable(readers)
       const readerPersisted = serialNumber => setPersistedReaderSerialNumber(serialNumber)
 
@@ -206,6 +229,7 @@ export default function createHooks(StripeTerminal) {
 
       // Cleanup: remove listeners
       return () => {
+        p1.cancel();
         listeners.forEach(l => l.remove())
       };
     }, [service]);
@@ -225,6 +249,9 @@ export default function createHooks(StripeTerminal) {
       },
       disconnectReader: () => {
         return service.disconnect();
+      },
+      abortDiscoverReaders: () => {
+        return StripeTerminal.abortDiscoverReaders();
       }
     };
   }
