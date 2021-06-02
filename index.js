@@ -47,7 +47,7 @@ class StripeTerminal {
   constructor() {
     this.listener = new NativeEventEmitter(RNStripeTerminal);
 
-    this.listener.addListener('requestConnectionToken', () => {
+    this.listener.addListener('requestConnectionToken', function(){
       this._fetchConnectionToken()
         .then(token => {
           if (token) {
@@ -57,7 +57,7 @@ class StripeTerminal {
           }
         })
         .catch(err => RNStripeTerminal.setConnectionToken(null, err.message || 'Error in user-supplied `fetchConnectionToken`.'));
-    });
+    }.bind(this));
 
     this._createListeners([
       'log',
