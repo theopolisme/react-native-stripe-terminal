@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter,Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import createHooks from './hooks';
 import createConnectionService from './connectionService';
 
