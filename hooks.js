@@ -232,7 +232,7 @@ export default function createHooks(StripeTerminal) {
         p1.cancel();
         listeners.forEach(l => l.remove())
       };
-    }, [service]);
+    }, []);
 
     return {
       ...state,
