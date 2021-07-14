@@ -12,7 +12,7 @@
 #import "StripeTerminal.h"
 #endif
 
-@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPReaderDisplayDelegate, SCPTerminalDelegate, SCPReaderSoftwareUpdateDelegate> {
+@interface RNStripeTerminal : RCTEventEmitter <RCTBridgeModule, SCPConnectionTokenProvider, SCPDiscoveryDelegate, SCPTerminalDelegate, SCPBluetoothReaderDelegate> {
 
     NSArray<SCPReader *> *readers;
     SCPReader *reader;

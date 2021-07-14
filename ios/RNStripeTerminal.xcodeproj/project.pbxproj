@@ -242,6 +242,7 @@
 					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
 					"$(SRCROOT)/../../../ios/Pods/Headers/Public/**",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNStripeTerminal;
@@ -264,6 +265,7 @@
 					"$(SRCROOT)/../../../ios/Pods/StripeTerminal/Carthage/Build/iOS/StripeTerminal.framework/Headers",
 					"$(SRCROOT)/../../../ios/Pods/Headers/Public/**",
 				);
+				IPHONEOS_DEPLOYMENT_TARGET = 11.0;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = RNStripeTerminal;
