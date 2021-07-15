@@ -506,4 +506,28 @@ RCT_EXPORT_METHOD(getLastReaderEvent) {
 
 RCT_EXPORT_MODULE()
 
+// - (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
+//     <#code#>
+// }
+//
+// - (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
+//     <#code#>
+// }
+//
+// - (void)reader:(nonnull SCPReader *)reader didReportReaderSoftwareUpdateProgress:(float)progress {
+//     <#code#>
+// }
+//
+// - (void)reader:(nonnull SCPReader *)reader didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
+//     <#code#>
+// }
+//
+// - (void)reader:(nonnull SCPReader *)reader didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
+//     <#code#>
+// }
+//
+// - (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
+//     <#code#>
+// }
+
 @end
