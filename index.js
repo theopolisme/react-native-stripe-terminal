@@ -115,9 +115,9 @@ class StripeTerminal {
   });
   }
 
-  discoverReaders(deviceType, method, simulated) {
-    return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
-      RNStripeTerminal.discoverReaders(deviceType, method, simulated);
+  discoverReaders(method, simulated) {
+    return this._wrapPromiseReturn('readersDiscovered', () => {
+      RNStripeTerminal.discoverReaders(method, simulated);
     });
   }
 
@@ -133,9 +133,9 @@ class StripeTerminal {
     })
   }
 
-  connectReader(serialNumber) {
+  connectReader(serialNumber, locationId) {
     return this._wrapPromiseReturn('readerConnection', () => {
-      RNStripeTerminal.connectReader(serialNumber);
+      RNStripeTerminal.connectReader(serialNumber, locationId);
     });
   }
 

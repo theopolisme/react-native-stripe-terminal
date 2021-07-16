@@ -1,29 +1,55 @@
 {
-  "name": "react-native-stripe-terminal",
-  "title": "React Native Stripe Terminal",
-  "version": "2.0.0",
+  "_from": "git+https://github.com/mynorth/react-native-stripe-terminal.git#stripe-terminal-2",
+  "_id": "react-native-stripe-terminal@2.0.0",
+  "_inBundle": false,
+  "_integrity": "",
+  "_location": "/react-native-stripe-terminal",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "git",
+    "raw": "git+https://github.com/mynorth/react-native-stripe-terminal.git#stripe-terminal-2",
+    "rawSpec": "git+https://github.com/mynorth/react-native-stripe-terminal.git#stripe-terminal-2",
+    "saveSpec": "git+https://github.com/mynorth/react-native-stripe-terminal.git#stripe-terminal-2",
+    "fetchSpec": "https://github.com/mynorth/react-native-stripe-terminal.git",
+    "gitCommittish": "stripe-terminal-2"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "git+https://github.com/mynorth/react-native-stripe-terminal.git#202f6b51e15d443f4ac04f8e2ce62d6d5a8e8a2b",
+  "_spec": "git+https://github.com/mynorth/react-native-stripe-terminal.git#stripe-terminal-2",
+  "_where": "/Users/derek/react/EventGate/ios",
+  "author": {
+    "name": "Theo Patt",
+    "email": "theo@theopatt.com"
+  },
+  "bugs": {
+    "url": "https://github.com/theopolisme/react-native-stripe-terminal/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
   "description": "React Native Stripe Terminal",
+  "homepage": "https://github.com/theopolisme/react-native-stripe-terminal#readme",
+  "keywords": [
+    "react-native"
+  ],
+  "license": "MIT",
+  "licenseFilename": "LICENSE",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "react-native-stripe-terminal",
+  "peerDependencies": {
+    "react": "^16.2.0",
+    "react-native": "^0.52.0"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/theopolisme/react-native-stripe-terminal.git",
     "baseUrl": "https://github.com/theopolisme/react-native-stripe-terminal"
   },
-  "keywords": [
-    "react-native"
-  ],
-  "author": {
-    "name": "Theo Patt",
-    "email": "theo@theopatt.com"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "license": "MIT",
-  "licenseFilename": "LICENSE",
-  "readmeFilename": "README.md",
-  "peerDependencies": {
-    "react": "^16.2.0",
-    "react-native": "^0.52.0"
-  }
+  "title": "React Native Stripe Terminal",
+  "version": "2.0.0"
 }

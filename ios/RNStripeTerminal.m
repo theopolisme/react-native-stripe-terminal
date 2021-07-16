@@ -7,6 +7,7 @@
 #import "StripeTerminal.h"
 #endif
 
+
 @implementation RNStripeTerminal
 
 static dispatch_once_t onceToken = 0;
@@ -90,6 +91,7 @@ static dispatch_once_t onceToken = 0;
     [self sendEventWithName:@"requestConnectionToken" body:@{}];
 }
 
+// Sends back an enumerated list of readers to Javascript listener
 - (void)terminal:(SCPTerminal *)terminal didUpdateDiscoveredReaders:(NSArray<SCPReader *>*)_readers {
     readers = _readers;
 
@@ -148,15 +150,12 @@ RCT_EXPORT_METHOD(initialize) {
 }
 
 RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)discoveryMethod simulated:(BOOL *)simulated) {
-    // TODO: Use locationId variant?
-    // Attempt to abort any pending discoverReader calls first.
-    [self abortDiscoverReaders];
-
-    SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:(SCPDiscoveryMethod)discoveryMethod
-                                                                              //locationId:(nullable NSString *)locationId
-                                                                                    simulated:simulated];
-    pendingDiscoverReaders = [SCPTerminal.shared discoverReaders:config delegate:self completion:^(NSError * _Nullable error) {
-        pendingDiscoverReaders = nil;
+    [self abortDiscoverReaders]; // TODO: Does not appear to work, supply an explicit "cancel discovery" action in the app
+    SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:SCPDiscoveryMethodBluetoothScan
+                                                                                         simulated:NO];
+    pendingDiscoverReaders = [[SCPTerminal shared] discoverReaders:config
+                                                           delegate:self
+                                                         completion:^(NSError *error) {
         if (error) {
             [self sendEventWithName:@"readerDiscoveryCompletion" body:@{@"error": [error localizedDescription]}];
         } else {
@@ -165,14 +164,16 @@ RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)discoveryMethod simulated:(BOOL *
     }];
 }
 
-RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
+RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)locationId ) {
     unsigned long readerIndex = [readers indexOfObjectPassingTest:^(SCPReader *reader, NSUInteger idx, BOOL *stop) {
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
 
-    SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:@"{{LOCATION_ID}}"];  // TODO: Figure out setting location ID
+    SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:locationId];  // TODO: Figure out setting location ID
 
-    [SCPTerminal.shared connectBluetoothReader:readers[readerIndex] delegate: self connectionConfig: connectionConfig completion:^(SCPReader * _Nullable reader_, NSError * _Nullable error) {
+    [SCPTerminal.shared connectBluetoothReader:readers[readerIndex] delegate: self
+                                                            connectionConfig: connectionConfig
+                                                                  completion:^(SCPReader * _Nullable reader_, NSError * _Nullable error) {
         reader = reader_;
         if (error) {
             [self sendEventWithName:@"readerConnection" body:@{@"error": [error localizedDescription]}];
@@ -182,6 +183,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
     }];
 }
 
+// Updates occur automatically in Stripe 2.0, these methods no longer needed - find a way to show status of any updates in app
 // RCT_EXPORT_METHOD(checkForUpdate) {
 //     [SCPTerminal.shared checkForUpdate:^(SCPReaderSoftwareUpdate * _Nullable update_, NSError * _Nullable error) {
 //         update = update_;
@@ -206,13 +208,17 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber ) {
 
 - (NSDictionary *)serializeReader:(SCPReader *)reader {
     return @{
+             @"locationId": reader.locationId ? reader.locationId : @"",
+             @"locationStatus": @(reader.locationStatus),
              @"batteryLevel": reader.batteryLevel ? reader.batteryLevel : @(0),
+             @"batteryStatus": @(reader.batteryStatus),
              @"deviceType": @(reader.deviceType),
              @"serialNumber": reader.serialNumber ? reader.serialNumber : @"",
              @"deviceSoftwareVersion": reader.deviceSoftwareVersion ? reader.deviceSoftwareVersion : @""
              };
 }
 
+// TODO: Remove?
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
     return @{
              @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
@@ -506,6 +512,7 @@ RCT_EXPORT_METHOD(getLastReaderEvent) {
 
 RCT_EXPORT_MODULE()
 
+// TODO: Stubs added by XCode, figure out if these are needed
 // - (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
 //     <#code#>
 // }
