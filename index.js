@@ -70,6 +70,10 @@ class StripeTerminal {
       'didChangePaymentStatus',
       'didChangeConnectionStatus',
       'didReportUnexpectedReaderDisconnect',
+      'didReportAvailableUpdate',
+      'didStartInstallingUpdate',
+      'didReportReaderSoftwareUpdateProgress',
+      'didFinishInstallingUpdate'
     ]);
   }
 

@@ -48,6 +48,10 @@ static dispatch_once_t onceToken = 0;
              @"didChangePaymentStatus",
              @"didChangeConnectionStatus",
              @"didDisconnectUnexpectedlyFromReader",
+             @"didReportAvailableUpdate",
+             @"didStartInstallingUpdate",
+             @"didReportReaderSoftwareUpdateProgress",
+             @"didFinishInstallingUpdate",
              @"connectedReader",
              @"connectionStatus",
              @"paymentStatus",
@@ -513,18 +517,18 @@ RCT_EXPORT_METHOD(getLastReaderEvent) {
 RCT_EXPORT_MODULE()
 
 // TODO: Stubs added by XCode, figure out if these are needed
-// - (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
-//     <#code#>
-// }
-//
-// - (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
-//     <#code#>
-// }
-//
-// - (void)reader:(nonnull SCPReader *)reader didReportReaderSoftwareUpdateProgress:(float)progress {
-//     <#code#>
-// }
-//
+- (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
+   [self sendEventWithName:@"didFinishInstallingUpdate" body:@{}];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
+   [self sendEventWithName:@"didReportAvailableUpdate" body:@{}];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didReportReaderSoftwareUpdateProgress:(float)progress {
+   [self sendEventWithName:@"didReportReaderSoftwareUpdateProgress" body:@(progress)];
+}
+
 // - (void)reader:(nonnull SCPReader *)reader didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
 //     <#code#>
 // }
@@ -533,8 +537,8 @@ RCT_EXPORT_MODULE()
 //     <#code#>
 // }
 //
-// - (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
-//     <#code#>
-// }
+- (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
+    [self sendEventWithName:@"didStartInstallingUpdate" body:@{}]; // [self serializeReader:reader]];
+}
 
 @end
