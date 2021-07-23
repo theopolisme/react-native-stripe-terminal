@@ -23,7 +23,11 @@ export default function createHooks(StripeTerminal) {
       let p5 = null;
       const didChangeConnectionStatus = ({ status }) => {
         setConnectionStaus(status);
-        p5 = cancelable(StripeTerminal.getConnectedReader().then(r => setConnectedReader(r)));
+        p5 = cancelable(StripeTerminal.getConnectedReader().then(r => {
+          setLastReaderEvent(StripeTerminal.ReaderEventCardRemoved);
+          setConnectedReader(r)
+        } 
+      ));
       };
       const didChangePaymentStatus = ({ status }) => setPaymentStatus(status);
       const didReportReaderEvent = ({ event }) => setLastReaderEvent(event);
@@ -169,7 +173,10 @@ export default function createHooks(StripeTerminal) {
                   setHasRetried(false);
                   setReaderError(error);
                 })
-                .catch(e => onFailure(e));
+                .catch(e => {
+                  clearReaderInputState();
+                  onFailure(e);
+                });
               return;
             }
 
