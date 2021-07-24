@@ -11,28 +11,64 @@ export default function createHooks(StripeTerminal) {
     const [connectedReader, setConnectedReader] = useState(null);
     const [readerInputOptions, setReaderInputOptions] = useState(null);
     const [readerInputPrompt, setReaderInputPrompt] = useState(null);
+    const isMounted = useRef(true);
 
     useEffect(() => {
       // Populate initial values
       const p1 = cancelable(StripeTerminal.getConnectionStatus())
-        p1.then(s => setConnectionStaus(s));
-      const p2 = cancelable(StripeTerminal.getPaymentStatus().then(s => setPaymentStatus(s)));
-      const p3 = cancelable(StripeTerminal.getLastReaderEvent().then(e => setLastReaderEvent(e)));
-      const p4 = cancelable(StripeTerminal.getConnectedReader().then(r => setConnectedReader(r)));
+      p1.then(s => {
+        if (isMounted.current) {
+          setConnectionStaus(s);
+        }
+      });
+      const p2 = cancelable(StripeTerminal.getPaymentStatus().then(s => {
+        if (isMounted.current) {
+          setPaymentStatus(s);
+        }
+      })).catch(e => {});
+      const p3 = cancelable(StripeTerminal.getLastReaderEvent().then(e => {
+        if (isMounted.current) {
+          setLastReaderEvent(e);
+        }
+      })).catch(e => {});
+      const p4 = cancelable(StripeTerminal.getConnectedReader().then(r => {
+        if (isMounted.current) {
+          setConnectedReader(r);
+        }
+      })).catch(e => {});
 
       let p5 = null;
       const didChangeConnectionStatus = ({ status }) => {
-        setConnectionStaus(status);
-        p5 = cancelable(StripeTerminal.getConnectedReader().then(r => {
-          setLastReaderEvent(StripeTerminal.ReaderEventCardRemoved);
-          setConnectedReader(r)
+        if (isMounted.current) {
+          setConnectionStaus(status);
+          p5 = cancelable(StripeTerminal.getConnectedReader().then(r => {
+            if (isMounted.current) {
+              setLastReaderEvent(StripeTerminal.ReaderEventCardRemoved);
+              setConnectedReader(r);
+            }
+          })).catch(e => {});
         } 
-      ));
       };
-      const didChangePaymentStatus = ({ status }) => setPaymentStatus(status);
-      const didReportReaderEvent = ({ event }) => setLastReaderEvent(event);
-      const didBeginWaitingForReaderInput = ({ text }) => setReaderInputOptions(text);
-      const didRequestReaderInput = ({ text }) => setReaderInputPrompt(text);
+      const didChangePaymentStatus = ({ status }) => {
+        if (isMounted.current) {
+          setPaymentStatus(status);
+        }
+      };
+      const didReportReaderEvent = ({ event }) => {
+        if (isMounted.current) {
+          setLastReaderEvent(event);
+        }
+      };
+      const didBeginWaitingForReaderInput = ({ text }) => {
+        if (isMounted.current) {
+          setReaderInputOptions(text);
+        }
+      };
+      const didRequestReaderInput = ({ text }) => {
+        if (isMounted.current) {
+          setReaderInputPrompt(text);
+        }
+      };
 
       // Setup listeners
       StripeTerminal.addDidChangeConnectionStatusListener(didChangeConnectionStatus);
@@ -58,6 +94,12 @@ export default function createHooks(StripeTerminal) {
       };
     }, []);
 
+    useEffect(() => {
+      return () => {
+        isMounted.current = false;
+      }
+    }, [])
+
     const cardInserted = lastReaderEvent === StripeTerminal.ReaderEventCardInserted;
 
     return {
@@ -68,8 +110,10 @@ export default function createHooks(StripeTerminal) {
       readerInputPrompt,
       cardInserted,
       clearReaderInputState: () => {
-        setReaderInputOptions(null);
-        setReaderInputPrompt(null);
+        if (isMounted.current) {
+          setReaderInputOptions(null);
+          setReaderInputPrompt(null);
+        }
       }
     };
   }
@@ -82,23 +126,28 @@ export default function createHooks(StripeTerminal) {
     const [isCompleted, setIsCompleted] = useState(true);
     const [paymentMethod, setPaymentMethod] = useState(null);
     const [error, setError] = useState(null);
+    const isMounted = useRef(true);
     const busyError = "Could not execute readReusableCard because the SDK is busy with another command: readReusableCard.";
 
     useEffect(() => {
       let p1;
-      if (isCompleted && !cardInserted) {
+      if (isCompleted && !cardInserted && isMounted.current) {
         setIsCompleted(false);
         p1 = cancelable(StripeTerminal.readReusableCard()
           .then(method => {
-            setError(null);
-            setPaymentMethod(method);
-            setIsCompleted(true)
-            return null;
+            if (isMounted.current) {
+              setError(null);
+              setPaymentMethod(method);
+              setIsCompleted(true)
+              return null;
+            }
           }).catch(({ error }) => {
-            setPaymentMethod(null);
-            setError(error);
-            setIsCompleted(true);
-            return null;
+            if (isMounted.current) { 
+              setPaymentMethod(null);
+              setError(error);
+              setIsCompleted(true);
+              return null;
+            }
           }).finally(() => {
             StripeTerminal.abortReadPaymentMethod();
           }));
@@ -115,7 +164,8 @@ export default function createHooks(StripeTerminal) {
 
     useEffect(() => {
       return () => {
-        StripeTerminal.abortReadPaymentMethod();
+        isMounted.current = false;
+        StripeTerminal.abortReadPaymentMethod().catch(e => {});
       }
     }, [])
 
@@ -212,21 +262,38 @@ export default function createHooks(StripeTerminal) {
       connectedReader,
       paymentStatus,
     } = state = useStripeTerminalState();
+    const isMounted = useRef(true);
 
     const [managerConnectionStatus, setManagerConnectionStatus] = useState(ConnectionManagerStatusDisconnected);
     const [readersAvailable, setReadersAvailable] = useState([]);
     const [persistedReaderSerialNumber, setPersistedReaderSerialNumber] = useState(null);
 
     useEffect(() => {
-      setManagerConnectionStatus(!!connectedReader ? ConnectionManagerStatusConnected : ConnectionManagerStatusDisconnected);
+
+      if (isMounted.current) {
+        setManagerConnectionStatus(!!connectedReader ? ConnectionManagerStatusConnected : ConnectionManagerStatusDisconnected);
+      }
     }, [connectedReader]);
 
     useEffect(() => {
       // Populate initial values
       const p1 = cancelable(service.getPersistedReaderSerialNumber()
-      .then(s => setPersistedReaderSerialNumber(s)));
-      const readerDiscovered = readers => setReadersAvailable(readers)
-      const readerPersisted = serialNumber => setPersistedReaderSerialNumber(serialNumber)
+        .then(s => {
+          if (isMounted.current) {
+            setPersistedReaderSerialNumber(s)
+          }
+          return;
+        }));
+      const readerDiscovered = readers => {
+        if (isMounted.current) {
+          setReadersAvailable(readers)
+        }
+      }
+      const readerPersisted = serialNumber => {
+        if (isMounted.current) {
+          setPersistedReaderSerialNumber(serialNumber)
+        }
+      }
 
       // Setup listeners
       const listeners = [
@@ -241,17 +308,27 @@ export default function createHooks(StripeTerminal) {
       };
     }, []);
 
+    useEffect(() => {
+      return () => {
+        isMounted.current = false;
+      }
+    }, [])
+
     return {
       ...state,
       managerConnectionStatus,
       readersAvailable,
       persistedReaderSerialNumber,
       connectReader: (serialNumber) => {
-        setManagerConnectionStatus(ConnectionManagerStatusConnecting);
+        if (isMounted.current) {
+          setManagerConnectionStatus(ConnectionManagerStatusConnecting);
+        }
         service.connect(serialNumber);
       },
       discoverReaders: () => {
-        setManagerConnectionStatus(ConnectionManagerStatusScanning);
+        if (isMounted.current) {
+          setManagerConnectionStatus(ConnectionManagerStatusScanning);
+        }
         return service.discover();
       },
       disconnectReader: () => {
