@@ -154,7 +154,7 @@ RCT_EXPORT_METHOD(initialize) {
 }
 
 RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)discoveryMethod simulated:(BOOL *)simulated) {
-    [self abortDiscoverReaders]; // TODO: Does not appear to work, supply an explicit "cancel discovery" action in the app
+    [self abortDiscoverReaders];
     SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:SCPDiscoveryMethodBluetoothScan
                                                                                          simulated:NO];
     pendingDiscoverReaders = [[SCPTerminal shared] discoverReaders:config
@@ -173,7 +173,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
 
-    SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:locationId];  // TODO: Figure out setting location ID
+    SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:locationId];
 
     [SCPTerminal.shared connectBluetoothReader:readers[readerIndex] delegate: self
                                                             connectionConfig: connectionConfig
@@ -222,7 +222,6 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
              };
 }
 
-// TODO: Remove?
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
     return @{
              @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
@@ -382,14 +381,14 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
     }];
 }
 
-- (void)terminal:(SCPTerminal *)terminal didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
+- (void)reader:(nonnull SCPReader *)reader didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
     [self sendEventWithName:@"didRequestReaderInput" body:
      @{
        @"text": [SCPTerminal stringFromReaderInputOptions:inputOptions]
        }];
 }
 
-- (void)terminal:(SCPTerminal *)terminal didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
+- (void)reader:(nonnull SCPReader *)reader didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
     [self sendEventWithName:@"didRequestReaderDisplayMessage" body:
      @{
        @"text": [SCPTerminal stringFromReaderDisplayMessage:displayMessage]
@@ -425,6 +424,22 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 
 - (void)terminal:(SCPTerminal *)terminal didReportUnexpectedReaderDisconnect:(SCPReader *)reader {
     [self sendEventWithName:@"didReportUnexpectedReaderDisconnect" body:[self serializeReader:reader]];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
+   [self sendEventWithName:@"didFinishInstallingUpdate" body:@{}];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
+   [self sendEventWithName:@"didReportAvailableUpdate" body:@{}];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didReportReaderSoftwareUpdateProgress:(float)progress {
+   [self sendEventWithName:@"didReportReaderSoftwareUpdateProgress" body:@(progress)];
+}
+
+- (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
+    [self sendEventWithName:@"didStartInstallingUpdate" body:@{}];
 }
 
 RCT_EXPORT_METHOD(clearCachedCredentials) {
@@ -515,30 +530,5 @@ RCT_EXPORT_METHOD(getLastReaderEvent) {
 }
 
 RCT_EXPORT_MODULE()
-
-// TODO: Stubs added by XCode, figure out if these are needed
-- (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
-   [self sendEventWithName:@"didFinishInstallingUpdate" body:@{}];
-}
-
-- (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
-   [self sendEventWithName:@"didReportAvailableUpdate" body:@{}];
-}
-
-- (void)reader:(nonnull SCPReader *)reader didReportReaderSoftwareUpdateProgress:(float)progress {
-   [self sendEventWithName:@"didReportReaderSoftwareUpdateProgress" body:@(progress)];
-}
-
-// - (void)reader:(nonnull SCPReader *)reader didRequestReaderDisplayMessage:(SCPReaderDisplayMessage)displayMessage {
-//     <#code#>
-// }
-//
-// - (void)reader:(nonnull SCPReader *)reader didRequestReaderInput:(SCPReaderInputOptions)inputOptions {
-//     <#code#>
-// }
-//
-- (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
-    [self sendEventWithName:@"didStartInstallingUpdate" body:@{}]; // [self serializeReader:reader]];
-}
 
 @end
