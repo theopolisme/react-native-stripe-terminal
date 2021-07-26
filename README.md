@@ -89,11 +89,12 @@ StripeTerminal.createPayment({ amount: 1200, currency: "usd" })
 
 // You can use the following listeners to update your interface with
 // instructions for the user.
+// TODO: This listener does not exist...
 const waitingListener = StripeTerminal.addDidBeginWaitingForReaderInputListener(text => {
   // `text` is a string of instructions, like "Swipe / Tap / Dip".
   this.setState({ displayText: text });
 });
-const inputListener = StripeTerminal.addDidRequestReaderInputPrompt(text => {
+const inputListener = StripeTerminal.addDidRequestReaderInputListener(text => {
   // `text` is a prompt like "Retry Card".
   this.setState({ displayText: text });
 });
