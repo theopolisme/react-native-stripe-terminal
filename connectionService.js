@@ -24,11 +24,12 @@ export default function createConnectionService(StripeTerminal, options) {
 
     static DesiredReaderAny = "any";
 
-    constructor({ policy, deviceType, discoveryMode }) {
+    constructor({ policy, deviceType, discoveryMode, locationId }) {
       this.policy = policy;
       this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
       this.discoveryMode =
         discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
+      this.locationId = locationId
 
       if (STCS.Policies.indexOf(policy) === -1) {
         throw new Error(
@@ -69,7 +70,8 @@ export default function createConnectionService(StripeTerminal, options) {
       );
       if (foundReader) {
         connectionPromise = StripeTerminal.connectReader(
-          foundReader.serialNumber
+          foundReader.serialNumber,
+          this.locationId
         );
 
         // Otherwise, connect to best strength reader.
@@ -79,7 +81,8 @@ export default function createConnectionService(StripeTerminal, options) {
         this.desiredReader === STCS.DesiredReaderAny
       ) {
         connectionPromise = StripeTerminal.connectReader(
-          readers[0].serialNumber
+          readers[0].serialNumber,
+          this.locationId
         );
       }
 
@@ -116,7 +119,7 @@ export default function createConnectionService(StripeTerminal, options) {
       this.connect();
     };
 
-    async connect(serialNumber) {
+    async connect(serialNumber, locationId) {
       this.emitter.emit(
         STCS.EventLog,
         `Connecting to reader: "${serialNumber || "any"}"...`
@@ -139,16 +142,16 @@ export default function createConnectionService(StripeTerminal, options) {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
       return StripeTerminal.discoverReaders(
-        this.deviceType,
-        this.discoveryMode
+        this.discoveryMode,
+        0
       );
     }
 
     async discover() {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       return StripeTerminal.discoverReaders(
-        this.deviceType,
-        this.discoveryMode
+        this.discoveryMode,
+        0
       );
     }
 

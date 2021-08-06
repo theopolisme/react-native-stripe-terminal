@@ -173,7 +173,6 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
     }];
 
     SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:locationId];
-
     [SCPTerminal.shared connectBluetoothReader:readers[readerIndex] delegate: self
                                                             connectionConfig: connectionConfig
                                                                   completion:^(SCPReader * _Nullable reader_, NSError * _Nullable error) {
@@ -217,7 +216,8 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
              @"batteryStatus": @(reader.batteryStatus),
              @"deviceType": @(reader.deviceType),
              @"serialNumber": reader.serialNumber ? reader.serialNumber : @"",
-             @"deviceSoftwareVersion": reader.deviceSoftwareVersion ? reader.deviceSoftwareVersion : @""
+             @"deviceSoftwareVersion": reader.deviceSoftwareVersion ? reader.deviceSoftwareVersion : @"",
+             @"availableUpdate": reader.availableUpdate ? reader.availableUpdate : @"",
              };
 }
 

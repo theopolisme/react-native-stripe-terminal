@@ -1,11 +1,12 @@
 package com.reactnative_stripeterminal;
 
-import com.stripe.stripeterminal.model.external.ConnectionStatus;
-import com.stripe.stripeterminal.model.external.DeviceType;
-import com.stripe.stripeterminal.model.external.PaymentIntent;
-import com.stripe.stripeterminal.model.external.PaymentIntentStatus;
-import com.stripe.stripeterminal.model.external.PaymentStatus;
-import com.stripe.stripeterminal.model.external.ReaderEvent;
+import com.stripe.stripeterminal.external.models.ConnectionStatus;
+import com.stripe.stripeterminal.external.models.DeviceType;
+import com.stripe.stripeterminal.external.models.DiscoveryMethod;
+import com.stripe.stripeterminal.external.models.PaymentIntent;
+import com.stripe.stripeterminal.external.models.PaymentIntentStatus;
+import com.stripe.stripeterminal.external.models.PaymentStatus;
+import com.stripe.stripeterminal.external.models.ReaderEvent;
 
 import java.util.HashMap;
 
@@ -75,7 +76,7 @@ public class Constants {
     //Plugin Constants
     static{
         constants.put("DeviceTypeChipper2X", DeviceType.CHIPPER_2X.ordinal());
-        constants.put("DiscoveryMethodBluetoothScan",0);               //Not applicable for Android SDK
+        constants.put("DiscoveryMethodBluetoothScan", DiscoveryMethod.BLUETOOTH_SCAN);
         constants.put("DiscoveryMethodBluetoothProximity",0);          //Not applicable for Android SDK
         constants.put("PaymentIntentStatusRequiresPaymentMethod", PaymentIntentStatus.REQUIRES_PAYMENT_METHOD.ordinal());
         constants.put("PaymentIntentStatusRequiresConfirmation", PaymentIntentStatus.REQUIRES_CONFIRMATION.ordinal());

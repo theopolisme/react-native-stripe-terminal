@@ -105,7 +105,7 @@ class StripeTerminal {
   initialize({ fetchConnectionToken }) {
     this._fetchConnectionToken = fetchConnectionToken;
     return new Promise((resolve, reject)=>{
-    if(Platform.OS == "android"){
+    if(Platform.OS === "android"){
       RNStripeTerminal.initialize((status)=>{
         if(status.isInitialized === true){
           resolve()
