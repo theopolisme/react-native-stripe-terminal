@@ -40,6 +40,10 @@ public class Constants {
     public static final String EVENT_UPDATE_CHECK = "updateCheck";
     public static final String EVENT_READER_SOFTWARE_UPDATE_PROGRESS = "readerSoftwareUpdateProgress";
     public static final String EVENT_UPDATE_INSTALL = "updateInstall";
+    public static final String EVENT_DID_REPORT_AVAILABLE_UPDATE = "didReportAvailableUpdate";
+    public static final String EVENT_DID_START_INSTALLING_UPDATE = "didStartInstallingUpdate";
+    public static final String EVENT_DID_REPORT_UPDATE_PROGRESS = "didReportReaderSoftwareUpdateProgress";
+    public static final String EVENT_DID_FINISH_INSTALLING_UPDATE = "didFinishInstallingUpdate";
     public static final String EVENT_ABORT_INSTALL_COMPLETION = "abortInstallUpdateCompletion";
     public static final String EVENT_ABORT_CREATE_PAYMENT_COMPLETION = "abortCreatePaymentCompletion";
 
@@ -76,8 +80,8 @@ public class Constants {
     //Plugin Constants
     static{
         constants.put("DeviceTypeChipper2X", DeviceType.CHIPPER_2X.ordinal());
-        constants.put("DiscoveryMethodBluetoothScan", DiscoveryMethod.BLUETOOTH_SCAN);
-        constants.put("DiscoveryMethodBluetoothProximity",0);          //Not applicable for Android SDK
+        constants.put("DiscoveryMethodBluetoothScan", DiscoveryMethod.BLUETOOTH_SCAN.ordinal());
+        constants.put("DiscoveryMethodBluetoothProximity", DiscoveryMethod.BLUETOOTH_SCAN.ordinal()); //Not applicable for Android SDK
         constants.put("PaymentIntentStatusRequiresPaymentMethod", PaymentIntentStatus.REQUIRES_PAYMENT_METHOD.ordinal());
         constants.put("PaymentIntentStatusRequiresConfirmation", PaymentIntentStatus.REQUIRES_CONFIRMATION.ordinal());
         constants.put("PaymentIntentStatusRequiresCapture", PaymentIntentStatus.REQUIRES_CAPTURE.ordinal());

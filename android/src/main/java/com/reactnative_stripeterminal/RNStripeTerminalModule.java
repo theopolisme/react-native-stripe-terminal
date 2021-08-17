@@ -159,11 +159,10 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     public void discoverReaders(int method, int simulated) {
         boolean isSimulated = simulated == 0?false:true;
         try {
-            DiscoveryMethod discMethod = DiscoveryMethod.values()[method];
-            // TODO: No longer take device type
-            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, discMethod, isSimulated);
+//            DiscoveryMethod discMethod;
+//            discMethod = DiscoveryMethod.valueOf(DiscoveryMethod.BLUETOOTH_SCAN.);  // Our only discovery method for Android
+            DiscoveryConfiguration discoveryConfiguration = new DiscoveryConfiguration(0, DiscoveryMethod.BLUETOOTH_SCAN, isSimulated);
             Callback statusCallback = new Callback() {
-
                 @Override
                 public void onSuccess() {
                     pendingDiscoverReaders = null;
@@ -769,21 +768,21 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
 
     @Override
     public void onReportReaderSoftwareUpdateProgress(float v) {
-        sendEventWithName(EVENT_READER_SOFTWARE_UPDATE_PROGRESS,new Float(v));
+        sendEventWithName(EVENT_DID_REPORT_UPDATE_PROGRESS,new Float(v));
     }
 
     @Override
     public void onReportAvailableUpdate(ReaderSoftwareUpdate update) {
-    // TODO
+        sendEventWithName(EVENT_DID_REPORT_AVAILABLE_UPDATE, serializeUpdate(update));
     }
 
     @Override
     public void onFinishInstallingUpdate(ReaderSoftwareUpdate update, TerminalException e) {
-        sendEventWithName(EVENT_UPDATE_INSTALL, update);
+        sendEventWithName(EVENT_DID_FINISH_INSTALLING_UPDATE, serializeUpdate(update));
     }
 
     @Override
     public void onStartInstallingUpdate(ReaderSoftwareUpdate update, Cancelable cancel) {
-     // TODO
+        sendEventWithName(EVENT_DID_START_INSTALLING_UPDATE, serializeUpdate(update));
     }
 }
