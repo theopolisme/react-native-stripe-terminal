@@ -185,29 +185,6 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
     }];
 }
 
-// Updates occur automatically in Stripe 2.0, these methods no longer needed - find a way to show status of any updates in app
-// RCT_EXPORT_METHOD(checkForUpdate) {
-//     [SCPTerminal.shared checkForUpdate:^(SCPReaderSoftwareUpdate * _Nullable update_, NSError * _Nullable error) {
-//         update = update_;
-//         if (error) {
-//             [self sendEventWithName:@"updateCheck" body:@{@"error": [error localizedDescription]}];
-//         } else {
-//             [self sendEventWithName:@"updateCheck" body:[self serializeUpdate:update]];
-//         }
-//     }];
-// }
-//
-// RCT_EXPORT_METHOD(installUpdate) {
-//     pendingInstallUpdate = [SCPTerminal.shared installUpdate:update delegate:self completion:^(NSError * _Nullable error) {
-//         if (error) {
-//             [self sendEventWithName:@"updateInstall" body:@{@"error": [error localizedDescription]}];
-//         } else {
-//             update = nil;
-//             [self sendEventWithName:@"updateInstall" body:@{}];
-//         }
-//     }];
-// }
-
 - (NSDictionary *)serializeReader:(SCPReader *)reader {
     return @{
              @"locationId": reader.locationId ? reader.locationId : @"",

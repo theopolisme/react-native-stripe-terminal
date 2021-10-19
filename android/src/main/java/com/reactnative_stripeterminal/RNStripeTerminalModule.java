@@ -650,42 +650,6 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
         }
     }
 
-//     @ReactMethod
-//     public void installUpdate(){
-//         pendingInstallUpdate = Terminal.getInstance().installUpdate(readerSoftwareUpdate,this, new Callback() {
-//             @Override
-//             public void onSuccess() {
-//                 sendEventWithName(EVENT_UPDATE_INSTALL,Arguments.createMap());
-//                 readerSoftwareUpdate = null;
-//             }
-//
-//             @Override
-//             public void onFailure(@Nonnull TerminalException e) {
-//                 WritableMap errorMap = Arguments.createMap();
-//                 errorMap.putString(ERROR,e.getErrorMessage());
-//                 sendEventWithName(EVENT_UPDATE_INSTALL,errorMap);
-//             }
-//         });
-//     }
-
-//     @ReactMethod
-//     public void checkForUpdate(){
-//         Terminal.getInstance().checkForUpdate(new ReaderSoftwareUpdateCallback() {
-//             @Override
-//             public void onSuccess(@Nullable ReaderSoftwareUpdate readerSoftwareUpdate) {
-//                 RNStripeTerminalModule.this.readerSoftwareUpdate = readerSoftwareUpdate;
-//                 sendEventWithName(EVENT_UPDATE_CHECK,serializeUpdate(readerSoftwareUpdate));
-//             }
-//
-//             @Override
-//             public void onFailure(@Nonnull TerminalException e) {
-//                 WritableMap errorMap = Arguments.createMap();
-//                 errorMap.putString(ERROR,e.getErrorMessage());
-//                 sendEventWithName(EVENT_UPDATE_CHECK,errorMap);
-//             }
-//         });
-//     }
-
     @ReactMethod
     public void getConnectionStatus(){
         ConnectionStatus status = Terminal.getInstance().getConnectionStatus();
