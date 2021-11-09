@@ -653,15 +653,13 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     @ReactMethod
     public void getConnectionStatus(){
         ConnectionStatus status = Terminal.getInstance().getConnectionStatus();
-        WritableMap statusMap = Arguments.createMap();
-        statusMap.putInt(EVENT_CONNECTION_STATUS,status.ordinal());
+        sendEventWithName(EVENT_CONNECTION_STATUS, status.ordinal());
     }
 
     @ReactMethod
     public void getPaymentStatus(){
         PaymentStatus status = Terminal.getInstance().getPaymentStatus();
-        WritableMap statusMap = Arguments.createMap();
-        statusMap.putInt(EVENT_PAYMENT_STATUS,status.ordinal());
+        sendEventWithName(EVENT_PAYMENT_STATUS, status.ordinal());
     }
 
     @Override
