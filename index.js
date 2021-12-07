@@ -1,4 +1,4 @@
-import { NativeModules, NativeEventEmitter,Platform } from 'react-native';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 import createHooks from './hooks';
 import createConnectionService from './connectionService';
 
@@ -62,6 +62,7 @@ class StripeTerminal {
     this._createListeners([
       'log',
       'readersDiscovered',
+      'abortDiscoverReadersCompletion',
       'readerSoftwareUpdateProgress',
       'didRequestReaderInput',
       'didRequestReaderDisplayMessage',
@@ -70,6 +71,10 @@ class StripeTerminal {
       'didChangePaymentStatus',
       'didChangeConnectionStatus',
       'didReportUnexpectedReaderDisconnect',
+      'didReportAvailableUpdate',
+      'didStartInstallingUpdate',
+      'didReportReaderSoftwareUpdateProgress',
+      'didFinishInstallingUpdate'
     ]);
   }
 
@@ -100,7 +105,7 @@ class StripeTerminal {
   initialize({ fetchConnectionToken }) {
     this._fetchConnectionToken = fetchConnectionToken;
     return new Promise((resolve, reject)=>{
-    if(Platform.OS == "android"){
+    if(Platform.OS === "android"){
       RNStripeTerminal.initialize((status)=>{
         if(status.isInitialized === true){
           resolve()
@@ -115,9 +120,9 @@ class StripeTerminal {
   });
   }
 
-  discoverReaders(deviceType, method, simulated) {
-    return this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
-      RNStripeTerminal.discoverReaders(deviceType, method, simulated);
+  discoverReaders(method, simulated) {
+    return this._wrapPromiseReturn('readersDiscovered', () => {
+      RNStripeTerminal.discoverReaders(method, simulated);
     });
   }
 
@@ -133,9 +138,9 @@ class StripeTerminal {
     })
   }
 
-  connectReader(serialNumber) {
+  connectReader(serialNumber, locationId) {
     return this._wrapPromiseReturn('readerConnection', () => {
-      RNStripeTerminal.connectReader(serialNumber);
+      RNStripeTerminal.connectReader(serialNumber, locationId);
     });
   }
 
