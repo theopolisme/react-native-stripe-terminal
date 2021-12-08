@@ -40,6 +40,8 @@ First, follow all Stripe instructions under ["Install the iOS SDK"](https://stri
 
 The `StripeTerminal` object is a singleton. You must first call `StripeTerminal.initialize` and provide a function to fetch the connection token (see [Stripe docs](https://stripe.com/docs/terminal/ios#connection-token)).
 
+You must also have a method of creating and supplying a [Terminal Location ID](https://stripe.com/docs/api/terminal/locations).
+
 ### Basic usage
 
 ```javascript
@@ -54,12 +56,16 @@ StripeTerminal.initialize({
   }
 });
 
+// Get a terminal location ID fromyour backend/Stripe API. This is required to establish a connection
+// to the reader.
+const locationId = 'tml_*********';
+
 // Add a listener to handle when readers are discovered.
 // You could display the readers to the user to select, or just
 // auto-connect to the first available reader.
-StripeTerminal.addReadersDiscoveredListener(readers => {
+const discoverListener = StripeTerminal.addReadersDiscoveredListener(readers => {
   if (readers.length) {
-    StripeTerminal.connectReader(readers[0].serialNumber)
+    StripeTerminal.connectReader(readers[0].serialNumber, locationId)
       .then(() => {
         // reader is connected
         // now safe to call `StripeTerminal.createPaymentIntent`
@@ -69,8 +75,9 @@ StripeTerminal.addReadersDiscoveredListener(readers => {
 
 // When you're ready, scan for readers
 StripeTerminal.discoverReaders(
-  StripeTerminal.DeviceTypeChipper2X,
-  StripeTerminal.DiscoveryMethodBluetoothProximity);
+	StripeTerminal.DiscoveryMethodBluetoothProximity,
+	0  // Use 1 for "simulated" mode when running in an emulator
+);
 
 // After a reader is connected, create a payment intent.
 // 
@@ -89,18 +96,54 @@ StripeTerminal.createPayment({ amount: 1200, currency: "usd" })
 
 // You can use the following listeners to update your interface with
 // instructions for the user.
-const waitingListener = StripeTerminal.addDidBeginWaitingForReaderInputListener(text => {
-  // `text` is a string of instructions, like "Swipe / Tap / Dip".
-  this.setState({ displayText: text });
+
+// This firing without error does not mean the SDK is not still discovering. Just that it found readers.
+// The SDK must be actively discovering in order to connect.
+const discoverCompleteListener = StripeTerminal.addAbortDiscoverReadersCompletionListener(
+  ({ error }) => {
+    console.log('AbortDiscoverReadersCompletionListener');
+    if (error) {
+	  this.setState({ displayText: 'Discovery completed with error: ' + error });
+    }
+  },
+);
+
+// Handle changes in reader connection status
+const connectionStatusListener = StripeTerminal.addDidChangeConnectionStatusListener(
+  event => {
+    // Can check event.status against constants like:
+	if (event.status === StripeTerminal.ConnectionStatusConnecting) {
+	  this.setState({displayText: 'Connecting...'});  
+	}
+	if (event.status === StripeTerminal.ConnectionStatusConnected) {
+	  this.setState({displayText: 'Connected successfully'});
+	}
+  },
+);
+
+// Handle unexpected disconnects
+const disconnectListener = StripeTerminal.addDidReportUnexpectedReaderDisconnectListener(
+  reader => {
+    this.setState({displayText: 'Unexpectedly disconnected from reader ' + reader.serialNumber});
+  },
+);
+
+// Pass StripeTerminal logs to the Javascript console, if needed
+const logListener = StripeTerminal.addLogListener(log => {
+  console.log('[StripeTerminal] -- ' + log);
 });
-const inputListener = StripeTerminal.addDidRequestReaderInputPrompt(text => {
+
+const inputListener = StripeTerminal.addDidRequestReaderInputListener(text => {
   // `text` is a prompt like "Retry Card".
   this.setState({ displayText: text });
 });
 
 // Make sure you remove the listeners when you're done
 // (e.g. in componentWillUnmount).
-waitingListener.remove();
+discoverListener.remove();
+connectionStatusListener.remove();
+disconnectListener.remove();
+logListener.remove();
 inputListener.remove();
 
 ```

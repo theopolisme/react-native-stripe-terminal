@@ -91,6 +91,7 @@ export class StripeTerminal {
     this._createListeners([
       'log',
       'readersDiscovered',
+      'abortDiscoverReadersCompletion',
       'readerSoftwareUpdateProgress',
       'didRequestReaderInput',
       'didRequestReaderDisplayMessage',
@@ -99,6 +100,10 @@ export class StripeTerminal {
       'didChangePaymentStatus',
       'didChangeConnectionStatus',
       'didReportUnexpectedReaderDisconnect',
+      'didReportAvailableUpdate',
+      'didStartInstallingUpdate',
+      'didReportReaderSoftwareUpdateProgress',
+      'didFinishInstallingUpdate'
     ]);
   }
 
@@ -128,25 +133,25 @@ export class StripeTerminal {
 
   initialize = ({ fetchConnectionToken }) => {
     this._fetchConnectionToken = fetchConnectionToken;
-    return new Promise((resolve, reject) => {
-      if (Platform.OS === 'android') {
-        RNStripeTerminal.initialize((status) => {
-          if (status.isInitialized === true) {
-            resolve();
-          } else {
-            reject(status.error);
-          }
-        });
-      } else {
-        RNStripeTerminal.initialize();
-        resolve();
-      }
-    });
-  };
+    return new Promise((resolve, reject)=>{
+    if(Platform.OS === "android"){
+      RNStripeTerminal.initialize((status)=>{
+        if(status.isInitialized === true){
+          resolve()
+        }else{
+          reject(status.error);
+        }
+      });
+    }else{
+      RNStripeTerminal.initialize();
+      resolve();
+    }
+  });
+  }
 
-  discoverReaders = (deviceType, method, simulated) =>
-    this._wrapPromiseReturn('readerDiscoveryCompletion', () => {
-      RNStripeTerminal.discoverReaders(deviceType, method, simulated);
+  discoverReaders(method, simulated) {
+    return this._wrapPromiseReturn('readersDiscovered', () => {
+      RNStripeTerminal.discoverReaders(method, simulated);
     });
 
   checkForUpdate = () =>
@@ -163,9 +168,9 @@ export class StripeTerminal {
       RNStripeTerminal.installUpdate();
     });
 
-  connectReader = (serialNumber: string) =>
-    this._wrapPromiseReturn('readerConnection', () => {
-      RNStripeTerminal.connectReader(serialNumber);
+  connectReader(serialNumber, locationId) {
+    return this._wrapPromiseReturn('readerConnection', () => {
+      RNStripeTerminal.connectReader(serialNumber, locationId);
     });
 
   disconnectReader = () =>

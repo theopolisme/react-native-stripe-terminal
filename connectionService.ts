@@ -38,11 +38,12 @@ export default function createConnectionService(
     emitter: EventEmitter;
     desiredReader: null | string;
 
-    constructor({ policy, deviceType, discoveryMode, simulated }) {
+    constructor({ policy, deviceType, discoveryMode, locationId }) {
       this.policy = policy;
       this.deviceType = deviceType || StripeTerminal.DeviceTypeChipper2X;
-      this.discoveryMode = discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
-      this.simulated = simulated || 0;
+      this.discoveryMode =
+        discoveryMode || StripeTerminal.DiscoveryMethodBluetoothProximity;
+      this.locationId = locationId
 
       if (STCS.Policies.indexOf(policy) === -1) {
         throw new Error(
@@ -76,7 +77,10 @@ export default function createConnectionService(
       // if the connection drops, for example. Or when restoring from memory.
       const foundReader = readers.find((r) => r.serialNumber === this.desiredReader);
       if (foundReader) {
-        connectionPromise = StripeTerminal.connectReader(foundReader.serialNumber);
+        connectionPromise = StripeTerminal.connectReader(
+          foundReader.serialNumber,
+          this.locationId
+        );
 
         // Otherwise, connect to best strength reader.
       } else if (
@@ -84,7 +88,10 @@ export default function createConnectionService(
         (this.policy === STCS.PolicyPersist && !this.desiredReader) ||
         this.desiredReader === STCS.DesiredReaderAny
       ) {
-        connectionPromise = StripeTerminal.connectReader(readers[0].serialNumber);
+        connectionPromise = StripeTerminal.connectReader(
+          readers[0].serialNumber,
+          this.locationId
+        );
       }
 
       // If a connection is in progress, save the connected reader.
@@ -117,8 +124,11 @@ export default function createConnectionService(
       this.connect();
     };
 
-    async connect(serialNumber?: string) {
-      this.emitter.emit(STCS.EventLog, `Connecting to reader: "${serialNumber || 'any'}"...`);
+    async connect(serialNumber, locationId) {
+      this.emitter.emit(
+        STCS.EventLog,
+        `Connecting to reader: "${serialNumber || "any"}"...`
+      );
 
       if (serialNumber) {
         this.desiredReader = serialNumber;
@@ -136,12 +146,18 @@ export default function createConnectionService(
 
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
       await StripeTerminal.disconnectReader(); // cancel any existing non-matching reader
-      return StripeTerminal.discoverReaders(this.deviceType, this.discoveryMode, this.simulated);
+      return StripeTerminal.discoverReaders(
+        this.discoveryMode,
+        0
+      );
     }
 
     async discover() {
       await StripeTerminal.abortDiscoverReaders(); // end any pending search
-      return StripeTerminal.discoverReaders(this.deviceType, this.discoveryMode, this.simulated);
+      return StripeTerminal.discoverReaders(
+        this.discoveryMode,
+        0
+      );
     }
 
     async disconnect() {
