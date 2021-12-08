@@ -6,15 +6,21 @@
  * @flow
  */
 
-import React, {Component} from 'react';
-import {Platform, StyleSheet, Text, View, TouchableOpacity} from 'react-native';
-import StripeTerminal from './StripeTerminal.js';
+import React, { Component } from "react";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+  TouchableOpacity,
+} from "react-native";
+import StripeTerminal from "react-native-stripe-terminal";
 
 const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
+  ios: "Press Cmd+R to reload,\n" + "Cmd+D or shake for dev menu",
   android:
-    'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
+    "Double tap R on your keyboard to reload,\n" +
+    "Shake or press menu button for dev menu",
 });
 
 export default class App extends Component {
@@ -25,7 +31,7 @@ export default class App extends Component {
       isConnecting: false,
       readerConnected: false,
       completedPayment: null,
-      displayText: "Loading..."
+      displayText: "Loading...",
     };
 
     this.discover = this.discover.bind(this);
@@ -33,25 +39,30 @@ export default class App extends Component {
 
     StripeTerminal.initialize({
       fetchConnectionToken: () => {
-        return fetch('http://10.0.1.35:8080/_scanner/terminal_connection_token?api_key=2e21c24db5f8bfae31cf420b60f45df6', {
-          method: 'POST'
-        })
-        .then(resp => resp.json())
-        .then(data => {
-          console.log('got data', data);
-          return data.secret;
-        });
-      }
+        return fetch(
+          "http://10.0.1.35:8080/_scanner/terminal_connection_token?api_key=2e21c24db5f8bfae31cf420b60f45df6",
+          {
+            method: "POST",
+          }
+        )
+          .then((resp) => resp.json())
+          .then((data) => {
+            console.log("got data", data);
+            return data.secret;
+          });
+      },
     });
 
     StripeTerminal.addDidChangeConnectionStatusListener(({ status }) => {
       console.log("status change", status);
-      this.setState({ readerConnected: status === StripeTerminal.ConnectionStatusConnected });
+      this.setState({
+        readerConnected: status === StripeTerminal.ConnectionStatusConnected,
+      });
     });
 
     StripeTerminal.addDidDisconnectUnexpectedlyFromReaderListener(() => {
-      this.setState({ displayText: 'Disconnected unexpectedly! Oh noez' });
-    })
+      this.setState({ displayText: "Disconnected unexpectedly! Oh noez" });
+    });
 
     StripeTerminal.addDidBeginWaitingForReaderInputListener(({ text }) => {
       this.setState({ displayText: text });
@@ -61,19 +72,24 @@ export default class App extends Component {
       this.setState({ displayText: text });
     });
 
-    StripeTerminal.addReadersDiscoveredListener(readers => {
-      if (readers.length && !this.state.readerConnected && !this.state.isConnecting) {
+    StripeTerminal.addReadersDiscoveredListener((readers) => {
+      if (
+        readers.length &&
+        !this.state.readerConnected &&
+        !this.state.isConnecting
+      ) {
         this.setState({ isConnecting: true });
         StripeTerminal.connectReader(readers[0].serialNumber)
           .then(() => {
             this.setState({ isConnecting: false });
-          }).catch(e => console.log('failed to connect', e));
+          })
+          .catch((e) => console.log("failed to connect", e));
       }
     });
   }
 
   discover() {
-    this.setState({ completedPayment: 'discovery...' });
+    this.setState({ completedPayment: "discovery..." });
 
     StripeTerminal.discoverReaders(
       //StripeTerminal.DeviceTypeReaderSimulator,
@@ -84,10 +100,10 @@ export default class App extends Component {
 
   createPayment() {
     StripeTerminal.createPaymentIntent({ amount: 1200, currency: "usd" })
-      .then(intent => {
+      .then((intent) => {
         this.setState({ completedPayment: intent });
       })
-      .catch(err => {
+      .catch((err) => {
         this.setState({ completedPayment: err });
       });
   }
@@ -96,8 +112,12 @@ export default class App extends Component {
     return (
       <View style={styles.container}>
         <Text style={styles.welcome}>{this.state.displayText}</Text>
-        <Text style={styles.instructions}>Connected: {this.state.readerConnected}</Text>
-        <Text style={styles.instructions}>{JSON.stringify(this.state.completedPayment)}</Text>
+        <Text style={styles.instructions}>
+          Connected: {this.state.readerConnected}
+        </Text>
+        <Text style={styles.instructions}>
+          {JSON.stringify(this.state.completedPayment)}
+        </Text>
 
         <TouchableOpacity onPress={this.discover}>
           <Text>Discover readers</Text>
@@ -113,18 +133,18 @@ export default class App extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F5FCFF",
   },
   welcome: {
     fontSize: 20,
-    textAlign: 'center',
+    textAlign: "center",
     margin: 10,
   },
   instructions: {
-    textAlign: 'center',
-    color: '#333333',
+    textAlign: "center",
+    color: "#333333",
     marginBottom: 5,
   },
 });
