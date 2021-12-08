@@ -55,5 +55,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "title": "React Native Stripe Terminal",
-  "version": "2.0.0"
+  "version": "2.0.0",
+  "dependencies": {
+    "eventemitter3": "^4.0.7"
+  }
 }
