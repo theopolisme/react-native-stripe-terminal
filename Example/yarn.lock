@@ -5520,11 +5520,16 @@
     "jscodeshift" "^0.11.0"
     "nullthrows" "^1.1.1"
 
+"react-native-location-enabler@^4.1.0":
+  "integrity" "sha512-SKjO+ks2B+1l2lbRCMtZ9QQ5BEIsIAHEztAWvWRyKZKVHHkes4vwD1nLazOvGjkAEnDnqbnr6LGan8OiwmX9Ow=="
+  "resolved" "https://registry.npmjs.org/react-native-location-enabler/-/react-native-location-enabler-4.1.0.tgz"
+  "version" "4.1.0"
+
 "react-native-stripe-terminal@github:theopolisme/react-native-stripe-terminal":
   "resolved" "git+ssh://git@github.com/theopolisme/react-native-stripe-terminal.git#39aebf926a70a1fbfba7c9011664947e921d7223"
   "version" "2.0.0"
 
-"react-native@^0.64.0", "react-native@>=0.64.0-rc.0 || 0.0.0-*":
+"react-native@*", "react-native@^0.64.0", "react-native@>=0.64.0-rc.0 || 0.0.0-*":
   "integrity" "sha512-2OEU74U0Ek1/WeBzPbg6XDsCfjF/9fhrNX/5TFgEiBKd5mNc9LOZ/OlMmkb7iues/ZZ/oc51SbEfLRQdcW0fVw=="
   "resolved" "https://registry.npmjs.org/react-native/-/react-native-0.64.3.tgz"
   "version" "0.64.3"
@@ -5601,7 +5606,7 @@
     "global" "^4.3.0"
     "react-proxy" "^1.1.7"
 
-"react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@^17.0.0", "react@^17.0.1", "react@17.0.1":
+"react@*", "react@^16.0.0 || ^17.0.0", "react@^16.8.0 || ^17.0.0", "react@^17.0.0", "react@^17.0.1", "react@17.0.1":
   "integrity" "sha512-lG9c9UuMHdcAexXtigOZLX8exLWkW0Ku29qPRU8uhF2R9BN96dLCt0psvzPLlHc5OWkgymP3qwTRgbnw5BKx3w=="
   "resolved" "https://registry.npmjs.org/react/-/react-17.0.1.tgz"
   "version" "17.0.1"
