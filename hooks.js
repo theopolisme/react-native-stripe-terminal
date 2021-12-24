@@ -25,8 +25,8 @@ export default function createHooks(StripeTerminal) {
         }),
         StripeTerminal.addDidChangePaymentStatusListener(({ status }) => setPaymentStatus(status)),
         StripeTerminal.addDidReportReaderEventListener(({ event }) => setLastReaderEvent(event)),
-        StripeTerminal.addDidBeginWaitingForReaderInputListener(({ text }) => setReaderInputOptions(text)),
-        StripeTerminal.addDidRequestReaderInputPromptListener(({ text }) => setReaderInputPrompt(text))
+        StripeTerminal.addDidRequestReaderInputListener(({ text }) => setReaderInputOptions(text)),
+        StripeTerminal.addDidRequestReaderDisplayMessageListener(({ text }) => setReaderInputPrompt(text))
       ];
 
       // Cleanup: remove listeners
@@ -71,7 +71,7 @@ export default function createHooks(StripeTerminal) {
     useEffect(() => {
 
       if (paymentStatus !== StripeTerminal.PaymentStatusNotReady &&
-          (!hasCreatedPayment || (readerError && !hasRetried && !cardInserted))) {
+        (!hasCreatedPayment || (readerError && !hasRetried && !cardInserted))) {
 
         setHasCreatedPayment(true);
         if (readerError) {
