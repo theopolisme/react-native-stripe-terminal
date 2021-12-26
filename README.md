@@ -1,6 +1,6 @@
 # react-native-stripe-terminal
 
-React Native wrapper for the [Stripe Terminal](https://stripe.com/docs/terminal/ios) SDK. (iOS & Android compatible!)
+React Native wrapper for the [Stripe Terminal](https://stripe.com/docs/terminal) SDK version 2. (iOS & Android compatible!)
 
 ## Getting started
 
