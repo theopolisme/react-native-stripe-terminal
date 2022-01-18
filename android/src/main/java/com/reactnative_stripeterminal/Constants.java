@@ -7,6 +7,8 @@ import com.stripe.stripeterminal.external.models.PaymentIntent;
 import com.stripe.stripeterminal.external.models.PaymentIntentStatus;
 import com.stripe.stripeterminal.external.models.PaymentStatus;
 import com.stripe.stripeterminal.external.models.ReaderEvent;
+import com.stripe.stripeterminal.external.models.SimulateReaderUpdate;
+import com.stripe.stripeterminal.external.models.SimulatedCardType;
 
 import java.util.HashMap;
 
@@ -37,9 +39,6 @@ public class Constants {
     public static final String EVENT_ABORT_DISCOVER_READER_COMPLETION = "abortDiscoverReadersCompletion";
     public static final String EVENT_PAYMENT_STATUS = "paymentStatus";
     public static final String EVENT_CONNECTION_STATUS = "connectionStatus";
-    public static final String EVENT_UPDATE_CHECK = "updateCheck";
-    public static final String EVENT_READER_SOFTWARE_UPDATE_PROGRESS = "readerSoftwareUpdateProgress";
-    public static final String EVENT_UPDATE_INSTALL = "updateInstall";
     public static final String EVENT_DID_REPORT_AVAILABLE_UPDATE = "didReportAvailableUpdate";
     public static final String EVENT_DID_START_INSTALLING_UPDATE = "didStartInstallingUpdate";
     public static final String EVENT_DID_REPORT_UPDATE_PROGRESS = "didReportReaderSoftwareUpdateProgress";
@@ -76,6 +75,9 @@ public class Constants {
     public static final String STATEMENT_DESCRIPTOR = "statementDescriptor";
     public static final String RECEIPT_EMAIL = "receiptEmail";
     public static final String UPDATE ="update";
+    public static final String UPDATE_TYPE = "updateType";
+    public static final String CARD = "card";
+    public static final String REQUIRED_AT = "requiredAt";
 
     //Plugin Constants
     static{
@@ -96,5 +98,33 @@ public class Constants {
         constants.put("ConnectionStatusNotConnected", ConnectionStatus.NOT_CONNECTED.ordinal());
         constants.put("ConnectionStatusConnected",ConnectionStatus.CONNECTED.ordinal());
         constants.put("ConnectionStatusConnecting",ConnectionStatus.CONNECTING.ordinal());
+
+        // Simulator Reader Update
+        constants.put("ReaderUpdateAvailable", SimulateReaderUpdate.UPDATE_AVAILABLE.ordinal());
+        constants.put("ReaderUpdateRequired", SimulateReaderUpdate.REQUIRED.ordinal());
+        constants.put("ReaderUpdateNone", SimulateReaderUpdate.NONE.ordinal());
+        constants.put("ReaderUpdateRandom", SimulateReaderUpdate.RANDOM.ordinal());
+
+        // Simulated Card Type
+        constants.put("CardMastercard", SimulatedCardType.MASTERCARD.ordinal());
+        constants.put("CardMastercardDebit", SimulatedCardType.MASTERCARD_DEBIT.ordinal());
+        constants.put("CardMastercardPrepaid", SimulatedCardType.MASTERCARD_PREPAID.ordinal());
+        constants.put("CardAmex", SimulatedCardType.AMEX.ordinal());
+        constants.put("CardAmex2", SimulatedCardType.AMEX_2.ordinal());
+        constants.put("CardVisa", SimulatedCardType.VISA.ordinal());
+        constants.put("CardVisaDebit", SimulatedCardType.VISA_DEBIT.ordinal());
+        constants.put("CardDiscover", SimulatedCardType.DISCOVER.ordinal());
+        constants.put("CardDiscover2", SimulatedCardType.DISCOVER_2.ordinal());
+        constants.put("CardDiners", SimulatedCardType.DINERS.ordinal());
+        constants.put("CardDiners14", SimulatedCardType.DINERS_14_DIGITS.ordinal());
+        constants.put("CardJcb", SimulatedCardType.JCB.ordinal());
+        constants.put("CardUnion", SimulatedCardType.UNION_PAY.ordinal());
+        constants.put("CardInterac", SimulatedCardType.INTERAC.ordinal());
+        constants.put("CardDeclined", SimulatedCardType.CHARGE_DECLINED.ordinal());
+        constants.put("CardDeclinedInsufficientFunds", SimulatedCardType.CHARGE_DECLINED_INSUFFICIENT_FUNDS.ordinal());
+        constants.put("CardDeclinedExpired", SimulatedCardType.CHARGE_DECLINED_EXPIRED_CARD.ordinal());
+        constants.put("CardDeclinedLost", SimulatedCardType.CHARGE_DECLINED_LOST_CARD.ordinal());
+        constants.put("CardDeclinedStolen", SimulatedCardType.CHARGE_DECLINED_STOLEN_CARD.ordinal());
+        constants.put("CardDeclinedProcessingError", SimulatedCardType.CHARGE_DECLINED_PROCESSING_ERROR.ordinal());
     }
 }
