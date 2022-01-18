@@ -16,7 +16,10 @@ import {
   TextInput,
   Switch,
 } from "react-native";
-import StripeTerminal from "react-native-stripe-terminal";
+import StripeTerminal, {
+  readerUpdateTypes,
+  simulatedCardTypes,
+} from "react-native-stripe-terminal";
 import RNAndroidLocationEnabler from "react-native-android-location-enabler";
 import { PERMISSIONS, request, RESULTS } from "react-native-permissions";
 
@@ -122,6 +125,30 @@ export default class App extends Component {
         this.setState({ displayText: text });
       }
     );
+
+    this.updateListener = StripeTerminal.addDidReportAvailableUpdateListener(
+      (data) => {
+        console.log("updateListener", data);
+      }
+    );
+
+    this.startInstallingUpdateListener = StripeTerminal.addDidStartInstallingUpdateListener(
+      (data) => {
+        console.log("didStartInstallingUpdateListener", data);
+      }
+    );
+
+    this.didReportReaderSoftwareUpdateProgressListener = StripeTerminal.addDidReportReaderSoftwareUpdateProgressListener(
+      (data) => {
+        console.log("didReportReaderSoftwareUpdateProgress", data);
+      }
+    );
+
+    this.finishInstallingUpdateListener = StripeTerminal.addDidFinishInstallingUpdateListener(
+      (data) => {
+        console.log("didFinishInstallingUpdateListener", data);
+      }
+    );
   }
 
   askPermission(permission) {
@@ -205,6 +232,23 @@ export default class App extends Component {
             })
               .then((resp) => resp.json())
               .then((data) => {
+                StripeTerminal.getSimulatorConfiguration().then((config) => {
+                  console.log("SIMULATED before", config);
+                });
+                StripeTerminal.setSimulatorConfiguration(
+                  readerUpdateTypes.AVAILABLE,
+                  "4000000000000069",
+                  simulatedCardTypes.AMEX
+                )
+                  .then((config) => {
+                    console.log("SIMULATED", config);
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+                StripeTerminal.getSimulatorConfiguration().then((config) => {
+                  console.log("SIMULATED after", config);
+                });
                 console.log("got data fetchConnectionToken", data);
                 return data.secret;
               })
@@ -234,6 +278,11 @@ export default class App extends Component {
     this.disconnectListener.remove();
     this.logListener.remove();
     this.inputListener.remove();
+    this.updateListener.remove();
+    this.startInstallingUpdateListener.remove();
+    this.didReportReaderSoftwareUpdateProgressListener.remove();
+    this.finishInstallingUpdateListener.remove();
+    StripeTerminal.abortDiscoverReaders();
   }
 
   discover() {
@@ -356,6 +405,45 @@ export default class App extends Component {
         <TouchableOpacity style={styles.btn} onPress={this.createPayment}>
           <Text style={styles.btnText}>Pay</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => {
+            StripeTerminal.installUpdate()
+              .then((u) => {
+                if (u && Object.keys(u).length > 0) {
+                  console.log("Update installed", u);
+                } else {
+                  console.log("No updates found");
+                }
+              })
+              .catch((e) => {
+                console.log("Update not installed", e);
+              });
+          }}
+        >
+          <Text style={styles.btnText}>Update</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.btn}
+          onPress={() => {
+            StripeTerminal.abortInstallUpdate()
+              .then((u) => {
+                if (u && Object.keys(u).length > 0) {
+                  console.log("Update aborted", u);
+                } else {
+                  console.log("No updates found");
+                }
+              })
+              .catch((e) => {
+                console.log("Update not aborted", e);
+              });
+          }}
+        >
+          <Text style={styles.btnText}>Abort update</Text>
+        </TouchableOpacity>
+
         <View
           style={{
             flexDirection: "row",
