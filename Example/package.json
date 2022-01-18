@@ -12,8 +12,9 @@
   "dependencies": {
     "react": "^17.0.1",
     "react-native": "^0.64.0",
-    "react-native-location-enabler": "^4.1.0",
-    "react-native-stripe-terminal": "github:theopolisme/react-native-stripe-terminal"
+    "react-native-stripe-terminal": "github:theopolisme/react-native-stripe-terminal",
+    "react-native-android-location-enabler": "^1.2.2",
+    "react-native-permissions": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0",

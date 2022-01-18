@@ -13,18 +13,12 @@ import {
   Text,
   View,
   TouchableOpacity,
-  PermissionsAndroid,
   TextInput,
+  Switch,
 } from "react-native";
 import StripeTerminal from "react-native-stripe-terminal";
-import LocationEnabler from "react-native-location-enabler";
-
-const {
-  PRIORITIES: { HIGH_ACCURACY },
-  addListener,
-  checkSettings,
-  requestResolutionSettings,
-} = LocationEnabler;
+import RNAndroidLocationEnabler from "react-native-android-location-enabler";
+import { PERMISSIONS, request, RESULTS } from "react-native-permissions";
 
 const instructions = Platform.select({
   ios: "Press Cmd+R to reload,\n" + "Cmd+D or shake for dev menu",
@@ -36,7 +30,6 @@ const instructions = Platform.select({
 export default class App extends Component {
   constructor(props) {
     super(props);
-    console.log("StripeTerminal", LocationEnabler);
     this.state = {
       isConnecting: false,
       readerConnected: false,
@@ -44,29 +37,19 @@ export default class App extends Component {
       displayText: "Loading...",
       connectedReader: "None",
       isSimulated: false,
-      locationId: "",
-      locationPermission: false,
+      locationId: "tml_*********",
+      discoveryMethod: 0, // false = internet, true = bluetooth
+      // locationEnabled: true,
     };
+
+    this.BACKEND_URL = "https://your.backend.com";
 
     this.discover = this.discover.bind(this);
     this.createPayment = this.createPayment.bind(this);
 
-    this.config = {
-      priority: HIGH_ACCURACY, // default BALANCED_POWER_ACCURACY
-      alwaysShow: true, // default false
-      needBle: true, // default false
-    };
-
-    this.listener = addListener(({ locationEnabled }) => {
-      console.log(`Location are ${locationEnabled ? "enabled" : "disabled"}`);
-    });
-
     this.discoverListener = StripeTerminal.addReadersDiscoveredListener(
       (readers) => {
         console.log("readers discovered", readers);
-        // for (let i = 0; i < readers.length; i++) {
-        //   alert(readers[i].serialNumber);
-        // }
         if (
           readers.length &&
           !this.state.readerConnected &&
@@ -78,7 +61,6 @@ export default class App extends Component {
             this.state.locationId
           )
             .then(() => {
-              console.log("connected to reader");
               this.setState({
                 isConnecting: false,
                 connectedReader: readers[0].serialNumber,
@@ -87,7 +69,7 @@ export default class App extends Component {
             })
             .catch((e) => {
               console.log("failed to connect", e);
-              alert("failed to connect " + JSON.stringify(e));
+              // alert("failed to connect " + JSON.stringify(e));
             });
         }
       }
@@ -142,120 +124,108 @@ export default class App extends Component {
     );
   }
 
-  async askPermission(permission) {
-    let granted = await PermissionsAndroid.check(permission);
+  askPermission(permission) {
+    let permissionObject = {};
 
-    if (granted) {
-      console.log("location permission 52", this.state.locationPermission);
-      this.setState({ locationPermission: true });
-      console.log("location permission 54", this.state.locationPermission);
-      console.log("You can use the", permission);
-    } else {
-      try {
-        granted = await PermissionsAndroid.request(permission, {
-          title: "Example App",
-          message: "Example App needs access to your location ",
-        });
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          this.setState({ locationPermission: true });
-          console.log("You can use the", permission);
-          alert("You can use the " + permission);
-        } else {
-          console.log("location permission denied");
-          alert("Location permission denied");
-        }
-      } catch (err) {
-        console.warn(err);
-        console.log("location permission denied");
-        alert("Location permission denied");
-      }
+    switch (permission) {
+      case "location":
+        permissionObject = {
+          android: PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
+          ios: PERMISSIONS.IOS.LOCATION_ALWAYS,
+        };
+        break;
+      default:
+        permissionObject = {};
     }
+
+    return new Promise((resolve, reject) => {
+      request(Platform.select(permissionObject))
+        .then((result) => {
+          switch (result) {
+            case RESULTS.UNAVAILABLE:
+              console.log(
+                "This feature is not available (on this device / in this context)"
+              );
+              reject(
+                `${permission}: This feature is not available (on this device / in this context)`
+              );
+              break;
+            case RESULTS.DENIED:
+              console.log(
+                "The permission has not been requested / is denied but request-able"
+              );
+              reject(
+                `${permission}: The permission has not been requested / is denied but request-able`
+              );
+              break;
+            case RESULTS.GRANTED:
+              console.log("The permission: " + permission + " is granted");
+              resolve(result);
+              break;
+            case RESULTS.BLOCKED:
+              console.log(
+                "The permission is denied and not request-able anymore"
+              );
+              reject(
+                `${permission}: The permission is denied and not request-able anymore`
+              );
+              break;
+          }
+        })
+        .catch((e) => {
+          console.warn(e);
+          reject(`${permission}: ${e}`);
+        });
+    });
   }
 
   async componentDidMount() {
-    let isEnabled = false;
-    if (Platform.OS === "android") {
-      // for newer sripe terminal SDKs
-      // await this.askPermission(
-      //   PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION
-      // );
+    // for newer sripe terminal SDKs
+    // await this.askPermission(
+    //   PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION
+    // );
 
-      await this.askPermission(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-      );
-      console.log("location permission", this.state.locationPermission);
-      console.log("config", this.config);
-      let isEnabled = await checkSettings(this.config);
-      console.log("isEnabled", isEnabled);
-      if (!isEnabled) {
-        const acceptance = await requestResolutionSettings(this.config);
-        console.log("acceptance", acceptance);
-        isEnabled = true;
-      }
-    } else {
-      await this.setState({ locationPermission: true });
-      isEnabled = true;
-    }
-
-    if (this.state.locationPermission && isEnabled) {
-      StripeTerminal.initialize({
-        fetchConnectionToken: () => {
-          console.log("fetching connection token");
-          return fetch("https://your.backend.com/connection_token", {
-            method: "POST",
-          })
-            .then((resp) => resp.json())
-            .then((data) => {
-              console.log("got data fetchConnectionToken", data);
-              return data.secret;
-            })
-            .catch((err) => {
-              alert("fetchConnectionToken error:" + JSON.stringify(err));
-            });
-        },
+    this.askPermission("location")
+      .then(() => {
+        if (Platform.OS === "android") {
+          return RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
+            interval: 10000,
+            fastInterval: 5000,
+          });
+        } else {
+          return Promise.resolve("Success");
+        }
       })
-        .then((data) => {
-          console.log("initialize", data);
-          return data.secret;
-        })
-        .catch((err) => {
-          alert("initialize error:" + JSON.stringify(err));
-        });
-    }
-  }
-
-  componentDidUpdate() {
-    if (this.state.locationPermission) {
-      StripeTerminal.initialize({
-        fetchConnectionToken: () => {
-          console.log("fetching connection token");
-          return fetch("https://your.backend.com/connection_token", {
-            method: "POST",
-          })
-            .then((resp) => resp.json())
-            .then((data) => {
-              console.log("got data fetchConnectionToken", data);
-              return data.secret;
+      .then(() => {
+        StripeTerminal.initialize({
+          fetchConnectionToken: () => {
+            console.log("fetching connection token");
+            return fetch(this.BACKEND_URL + "/connection_token", {
+              method: "POST",
             })
-            .catch((err) => {
-              alert("fetchConnectionToken error:" + JSON.stringify(err));
-            });
-        },
-      })
-        .then((data) => {
-          console.log("initialize", data);
-          return data.secret;
+              .then((resp) => resp.json())
+              .then((data) => {
+                console.log("got data fetchConnectionToken", data);
+                return data.secret;
+              })
+              .catch((err) => {
+                console.log("fetchConnectionToken error", err);
+                // alert("fetchConnectionToken " + JSON.stringify(err));
+              });
+          },
         })
-        .catch((err) => {
-          alert("initialize error:" + JSON.stringify(err));
-        });
-    } else {
-      if (Platform.OS === "android") {
-        // for newer sripe terminal SDKs
-        // this.askPermission(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
-        this.askPermission(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-      }
-    }
+          .then((data) => {
+            console.log("initialize", data);
+            return data.secret;
+          })
+          .catch((err) => {
+            console.log("initialize error", err);
+            // alert("initialize: " + JSON.stringify(err));
+          });
+      })
+      .catch((err) => {
+        alert("Location permission is required " + err);
+      });
   }
 
   componentWillUnmount() {
@@ -264,7 +234,6 @@ export default class App extends Component {
     this.disconnectListener.remove();
     this.logListener.remove();
     this.inputListener.remove();
-    this.listener.remove();
   }
 
   discover() {
@@ -274,22 +243,23 @@ export default class App extends Component {
       //StripeTerminal.DeviceTypeReaderSimulator,
       // StripeTerminal.DeviceTypeChipper2X,
       // StripeTerminal.DiscoveryMethodBluetoothProximity
-      1,
-      this.state.isSimulated ? 1 : 0
+      this.state.discoveryMethod,
+      this.state.isSimulated ? 1 : 0,
+      this.state.locationId
     )
       .then((readers) => {
-        console.log("readers", readers);
+        console.log("discover readers complete", JSON.stringify(readers));
       })
       .catch((err) => {
         console.log("error", err);
-        alert("discover readers error: " + JSON.stringify(err));
+        // alert("discover readers error: " + JSON.stringify(err));
       });
     console.log("discoverReaders");
   }
 
   createPayment() {
     this.setState({ completedPayment: "creating payment Intent" });
-    fetch("https://your.backend.com/create_payment_intent", {
+    fetch(this.BACKEND_URL + "/create_payment_intent", {
       method: "POST",
       headers: {
         Accept: "application/json",
@@ -303,7 +273,6 @@ export default class App extends Component {
       }),
     })
       .then((data) => data.json())
-      // StripeTerminal.createPaymentIntent({amount: Math.round(2 * 100),})   // for creating payment intent on frontend
       .then((paymentIntent) => {
         this.setState({ completedPayment: "created payment Intent" });
         console.log("creating intent", paymentIntent);
@@ -318,7 +287,7 @@ export default class App extends Component {
                   .then((intent) => {
                     this.setState({ completedPayment: "payment processed" });
                     console.log("payment success", intent.stripeId);
-                    fetch("https://your.backend.com/capture_payment_intent", {
+                    fetch(this.BACKEND_URL + "/capture_payment_intent", {
                       method: "POST",
                       headers: {
                         Accept: "application/json",
@@ -335,28 +304,28 @@ export default class App extends Component {
                       .catch((err) => {
                         console.log("capture error", err);
                         this.setState({ completedPayment: err });
-                        alert("capture error " + JSON.stringify(err));
+                        // alert("capture error " + JSON.stringify(err));
                       });
                   })
                   .catch((err) => {
                     this.setState({ completedPayment: err });
-                    alert("process payment error " + JSON.stringify(err));
+                    // alert("process payment error " + JSON.stringify(err));
                   });
               })
               .catch((err) => {
                 this.setState({ completedPayment: err });
-                alert("collect payment method error " + JSON.stringify(err));
+                // alert("collect payment method error " + JSON.stringify(err));
               });
           })
           .catch((err) => {
             console.log("retrieve payment intent error", err);
             this.setState({ completedPayment: err });
-            alert("retrieve error " + JSON.stringify(err));
+            // alert("retrieve error " + JSON.stringify(err));
           });
       })
       .catch((err) => {
         this.setState({ completedPayment: err });
-        alert("create payment intent error " + JSON.stringify(err));
+        // alert("create payment intent error " + JSON.stringify(err));
       });
   }
 
@@ -377,7 +346,7 @@ export default class App extends Component {
               this.setState({ locationId: value });
             }}
             value={this.state.locationId}
-            placeholder="Enter reader's location id"
+            placeholder="tml_*******"
           />
           <TouchableOpacity style={styles.btn} onPress={this.discover}>
             <Text style={styles.btnText}>Discover readers</Text>
@@ -387,19 +356,51 @@ export default class App extends Component {
         <TouchableOpacity style={styles.btn} onPress={this.createPayment}>
           <Text style={styles.btnText}>Pay</Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.btn}
-          onPress={() => {
-            console.log("state change simulation", this.state.isSimulated);
-            this.setState({ isSimulated: !this.state.isSimulated });
+        <View
+          style={{
+            flexDirection: "row",
+            flex: 1,
+            justifyContent: "space-between",
+            alignItems: "center",
           }}
         >
-          <Text style={styles.btnText}>
-            {this.state.isSimulated
-              ? "un-simulate readers"
-              : "simulate readers"}
-          </Text>
-        </TouchableOpacity>
+          <Text style={{ color: "black" }}>simulated</Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            thumbColor={this.state.isSimulated ? "#f5dd4b" : "#f4f3f4"}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={() => {
+              this.setState({
+                isSimulated: !this.state.isSimulated,
+              });
+            }}
+            value={this.state.isSimulated}
+          />
+        </View>
+        <View
+          style={{
+            flexDirection: "row",
+            flex: 1,
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginTop: 20,
+          }}
+        >
+          <Text style={{ color: "black" }}>Bluetooth</Text>
+          <Switch
+            trackColor={{ false: "#767577", true: "#81b0ff" }}
+            thumbColor={
+              this.state.discoveryMethod === 0 ? "#f5dd4b" : "#f4f3f4"
+            }
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={() => {
+              this.setState({
+                discoveryMethod: this.state.discoveryMethod === 0 ? 1 : 0,
+              });
+            }}
+            value={Boolean(!this.state.discoveryMethod)}
+          />
+        </View>
       </View>
     );
   }
