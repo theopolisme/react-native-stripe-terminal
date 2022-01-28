@@ -155,7 +155,7 @@ RCT_EXPORT_METHOD(initialize) {
 RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)discoveryMethod simulated:(BOOL *)simulated) {
     [self abortDiscoverReaders];
     SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:SCPDiscoveryMethodBluetoothScan
-                                                                                         simulated:NO];
+                                                                                         simulated:simulated];
     pendingDiscoverReaders = [[SCPTerminal shared] discoverReaders:config
                                                            delegate:self
                                                          completion:^(NSError *error) {
@@ -200,11 +200,12 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
 }
 
 - (NSDictionary *)serializeUpdate:(SCPReaderSoftwareUpdate *)update {
-    return @{
-             @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
-             @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
-             @"requiredAt": update.requiredAt
-             };
+    NSDictionary *updateDict = @{
+                @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
+                @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @"",
+                @"requiredAt": update.requiredAt,
+    };
+    return @{ @"update": updateDict};
 }
 
 - (NSDictionary *)serializePaymentIntent:(SCPPaymentIntent *)intent {
