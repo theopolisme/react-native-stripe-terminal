@@ -172,6 +172,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
         return [reader.serialNumber isEqualToString:serialNumber];
     }];
 
+    SCPTerminal.shared.simulatorConfiguration.availableReaderUpdate = SCPSimulateReaderUpdateRequired;
     SCPBluetoothConnectionConfiguration *connectionConfig = [[SCPBluetoothConnectionConfiguration alloc] initWithLocationId:locationId];
     [SCPTerminal.shared connectBluetoothReader:readers[readerIndex] delegate: self
                                                             connectionConfig: connectionConfig
@@ -202,6 +203,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
     return @{
              @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
              @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @""
+             @"requiredAt": update.requiredAt
              };
 }
 
@@ -403,7 +405,12 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 }
 
 - (void)reader:(nonnull SCPReader *)reader didFinishInstallingUpdate:(nullable SCPReaderSoftwareUpdate *)update error:(nullable NSError *)error {
-   [self sendEventWithName:@"didFinishInstallingUpdate" body:@{}];
+    if (error) {
+        [self sendEventWithName:@"didFinishInstallingUpdate" body:@{@"error": [error localizedDescription]}];
+    } else {
+        pendingInstallUpdate = nil;
+        [self sendEventWithName:@"didFinishInstallingUpdate" body:update ? [self serializeUpdate:update] : @{}];
+    }
 }
 
 - (void)reader:(nonnull SCPReader *)reader didReportAvailableUpdate:(nonnull SCPReaderSoftwareUpdate *)update {
@@ -415,7 +422,8 @@ RCT_EXPORT_METHOD(cancelPaymentIntent) {
 }
 
 - (void)reader:(nonnull SCPReader *)reader didStartInstallingUpdate:(nonnull SCPReaderSoftwareUpdate *)update cancelable:(nullable SCPCancelable *)cancelable {
-    [self sendEventWithName:@"didStartInstallingUpdate" body:@{}];
+    pendingInstallUpdate = cancelable;
+    [self sendEventWithName:@"didStartInstallingUpdate" body:update ? [self serializeUpdate:update] : @{}];
 }
 
 RCT_EXPORT_METHOD(clearCachedCredentials) {
