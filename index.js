@@ -1,8 +1,16 @@
 import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
+
 import createHooks from './hooks';
 import createConnectionService from './connectionService';
+import { filterAndRenameObj } from './utils';
 
 const { RNStripeTerminal } = NativeModules;
+
+const constants = RNStripeTerminal.getConstants();
+
+export const readerUpdateTypes = filterAndRenameObj(constants, 'ReaderUpdate');
+
+export const simulatedCardTypes = filterAndRenameObj(constants, 'Card');
 
 class StripeTerminal {
   // Device types
@@ -63,7 +71,6 @@ class StripeTerminal {
       'log',
       'readersDiscovered',
       'abortDiscoverReadersCompletion',
-      'readerSoftwareUpdateProgress',
       'didRequestReaderInput',
       'didRequestReaderDisplayMessage',
       'didReportReaderEvent',
@@ -120,22 +127,22 @@ class StripeTerminal {
   });
   }
 
+  getSimulatorConfiguration() {
+    return RNStripeTerminal.getSimulatorConfiguration();
+  }
+  
+  setSimulatorConfiguration(updateType, cardNumber, cardType){
+    return RNStripeTerminal.setSimulatorConfiguration(updateType || -1, cardNumber || null, cardType || -1);
+  }
+
   discoverReaders(method, simulated) {
     return this._wrapPromiseReturn('readersDiscovered', () => {
       RNStripeTerminal.discoverReaders(method, simulated);
     });
   }
 
-  checkForUpdate() {
-    return this._wrapPromiseReturn('updateCheck', () => {
-      RNStripeTerminal.checkForUpdate();
-    }, 'update')
-  }
-
   installUpdate() {
-    return this._wrapPromiseReturn('updateInstall', () => {
-      RNStripeTerminal.installUpdate();
-    })
+      return RNStripeTerminal.installUpdate();
   }
 
   connectReader(serialNumber, locationId) {
