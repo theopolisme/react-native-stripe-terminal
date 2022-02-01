@@ -102,7 +102,7 @@ StripeTerminal.createPayment({ amount: 1200, currency: "usd" })
     console.log(error);
   });
 
-// simulator config utils
+// simulator config utils(only on android)
 StripeTerminal.getSimulatorConfiguration().then((config) => {
   console.log("simulator config", config);
 });
