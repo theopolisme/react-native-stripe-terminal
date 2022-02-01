@@ -149,6 +149,10 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
             if (reader.getSoftwareVersion() != null)
                 softwareVersion = reader.getSoftwareVersion();
             writableMap.putString(DEVICE_SOFTWARE_VERSION, softwareVersion);
+
+            if (reader.getAvailableUpdate() != null)
+                writableMap.putMap(AVAILABLE_UPDATE, serializeUpdate(reader.getAvailableUpdate()));
+
         }
         return writableMap;
     }
