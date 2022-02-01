@@ -17,7 +17,7 @@
     NSArray<SCPReader *> *readers;
     SCPReader *reader;
     SCPPaymentIntent *intent;
-    SCPReaderSoftwareUpdate *update;
+    SCPReaderSoftwareUpdate *readerSoftwareUpdate;
     SCPCancelable *pendingReadPaymentMethod;
     SCPCancelable *pendingCreatePaymentIntent;
     SCPCancelable *pendingDiscoverReaders;

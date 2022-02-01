@@ -78,6 +78,7 @@ public class Constants {
     public static final String UPDATE_TYPE = "updateType";
     public static final String CARD = "card";
     public static final String REQUIRED_AT = "requiredAt";
+    public static final String AVAILABLE_UPDATE = "availableUpdate";
 
     //Plugin Constants
     static{
