@@ -3,13 +3,18 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node node_modules/react-native/local-cli/cli.js start",
+    "start": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
     "test": "jest",
     "lint": "eslint ."
   },
   "dependencies": {
-    "react": "16.8.3",
-    "react-native": "0.59.2"
+    "react": "^17.0.1",
+    "react-native": "^0.64.0",
+    "react-native-stripe-terminal": "github:theopolisme/react-native-stripe-terminal",
+    "react-native-android-location-enabler": "^1.2.2",
+    "react-native-permissions": "^3.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.4.0",
@@ -17,9 +22,10 @@
     "@react-native-community/eslint-config": "^0.0.3",
     "babel-jest": "^24.5.0",
     "eslint": "^5.15.3",
+    "graceful-fs": "^4.2.8",
     "jest": "^24.5.0",
     "metro-react-native-babel-preset": "^0.53.1",
-    "react-test-renderer": "16.8.3"
+    "react-test-renderer": "17.0.1"
   },
   "jest": {
     "preset": "react-native"

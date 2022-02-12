@@ -1,8 +1,16 @@
-import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
-import createHooks from './hooks';
-import createConnectionService from './connectionService';
+import { NativeModules, NativeEventEmitter, Platform } from "react-native";
+
+import createHooks from "./hooks";
+import createConnectionService from "./connectionService";
+import { filterAndRenameObj } from "./utils";
 
 const { RNStripeTerminal } = NativeModules;
+
+const constants = RNStripeTerminal.getConstants();
+
+export const readerUpdateTypes = filterAndRenameObj(constants, "ReaderUpdate");
+
+export const simulatedCardTypes = filterAndRenameObj(constants, "Card");
 
 class StripeTerminal {
   // Device types
@@ -30,10 +38,8 @@ class StripeTerminal {
   // Payment status
   PaymentStatusNotReady = RNStripeTerminal.PaymentStatusNotReady;
   PaymentStatusReady = RNStripeTerminal.PaymentStatusReady;
-  PaymentStatusWaitingForInput =
-    RNStripeTerminal.PaymentStatusWaitingForInput;
-  PaymentStatusProcessing =
-    RNStripeTerminal.PaymentStatusProcessing;
+  PaymentStatusWaitingForInput = RNStripeTerminal.PaymentStatusWaitingForInput;
+  PaymentStatusProcessing = RNStripeTerminal.PaymentStatusProcessing;
 
   // Connection status
   ConnectionStatusNotConnected = RNStripeTerminal.ConnectionStatusNotConnected;
@@ -42,54 +48,61 @@ class StripeTerminal {
 
   // Fetch connection token. Overwritten in call to initialize
   _fetchConnectionToken = () =>
-    Promise.reject('You must initialize RNStripeTerminal first.');
+    Promise.reject("You must initialize RNStripeTerminal first.");
 
   constructor() {
     this.listener = new NativeEventEmitter(RNStripeTerminal);
 
-    this.listener.addListener('requestConnectionToken', () => {
+    this.listener.addListener("requestConnectionToken", () => {
       this._fetchConnectionToken()
-        .then(token => {
+        .then((token) => {
           if (token) {
             RNStripeTerminal.setConnectionToken(token, null);
           } else {
-            throw new Error('User-supplied `fetchConnectionToken` resolved successfully, but no token was returned.');
+            throw new Error(
+              "User-supplied `fetchConnectionToken` resolved successfully, but no token was returned."
+            );
           }
         })
-        .catch(err => RNStripeTerminal.setConnectionToken(null, err.message || 'Error in user-supplied `fetchConnectionToken`.'));
+        .catch((err) =>
+          RNStripeTerminal.setConnectionToken(
+            null,
+            err.message || "Error in user-supplied `fetchConnectionToken`."
+          )
+        );
     });
 
     this._createListeners([
-      'log',
-      'readersDiscovered',
-      'abortDiscoverReadersCompletion',
-      'readerSoftwareUpdateProgress',
-      'didRequestReaderInput',
-      'didRequestReaderDisplayMessage',
-      'didReportReaderEvent',
-      'didReportLowBatteryWarning',
-      'didChangePaymentStatus',
-      'didChangeConnectionStatus',
-      'didReportUnexpectedReaderDisconnect',
-      'didReportAvailableUpdate',
-      'didStartInstallingUpdate',
-      'didReportReaderSoftwareUpdateProgress',
-      'didFinishInstallingUpdate'
+      "log",
+      "readersDiscovered",
+      "abortDiscoverReadersCompletion",
+      "didRequestReaderInput",
+      "didRequestReaderDisplayMessage",
+      "didReportReaderEvent",
+      "didReportLowBatteryWarning",
+      "didChangePaymentStatus",
+      "didChangeConnectionStatus",
+      "didReportUnexpectedReaderDisconnect",
+      "didReportAvailableUpdate",
+      "didStartInstallingUpdate",
+      "didReportReaderSoftwareUpdateProgress",
+      "didFinishInstallingUpdate",
     ]);
   }
 
   _createListeners(keys) {
-    keys.forEach(k => {
-      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = listener =>
+    keys.forEach((k) => {
+      this[`add${k[0].toUpperCase() + k.substring(1)}Listener`] = (listener) =>
         this.listener.addListener(k, listener);
-      this[`remove${k[0].toUpperCase() + k.substring(1)}Listener`] = listener =>
-        this.listener.removeListener(k, listener);
+      this[`remove${k[0].toUpperCase() + k.substring(1)}Listener`] = (
+        listener
+      ) => this.listener.removeListener(k, listener);
     });
   }
 
   _wrapPromiseReturn(event, call, key) {
     return new Promise((resolve, reject) => {
-      const subscription = this.listener.addListener(event, data => {
+      const subscription = this.listener.addListener(event, (data) => {
         if (data && data.error) {
           reject(data);
         } else {
@@ -104,162 +117,174 @@ class StripeTerminal {
 
   initialize({ fetchConnectionToken }) {
     this._fetchConnectionToken = fetchConnectionToken;
-    return new Promise((resolve, reject)=>{
-    if(Platform.OS === "android"){
-      RNStripeTerminal.initialize((status)=>{
-        if(status.isInitialized === true){
-          resolve()
-        }else{
-          reject(status.error);
-        }
-      });
-    }else{
-      RNStripeTerminal.initialize();
-      resolve();
+    return new Promise((resolve, reject) => {
+      if (Platform.OS === "android") {
+        RNStripeTerminal.initialize((status) => {
+          if (status.isInitialized === true) {
+            resolve();
+          } else {
+            reject(status.error);
+          }
+        });
+      } else {
+        RNStripeTerminal.initialize();
+        resolve();
+      }
+    });
+  }
+
+  getSimulatorConfiguration() {
+    if (Platform.OS === "android") {
+      return RNStripeTerminal.getSimulatorConfiguration();
+    } else {
+      return Promise.reject("getSimulatorConfig not supported on iOS");
     }
-  });
+  }
+
+  setSimulatorConfiguration(updateType, cardNumber, cardType) {
+    if (Platform.OS === "android") {
+      return RNStripeTerminal.setSimulatorConfiguration(
+        updateType || -1,
+        cardNumber || null,
+        cardType || -1
+      );
+    } else {
+      return Promise.reject("getSimulatorConfig not supported on iOS");
+    }
   }
 
   discoverReaders(method, simulated) {
-    return this._wrapPromiseReturn('readersDiscovered', () => {
+    return this._wrapPromiseReturn("readersDiscovered", () => {
       RNStripeTerminal.discoverReaders(method, simulated);
     });
   }
 
-  checkForUpdate() {
-    return this._wrapPromiseReturn('updateCheck', () => {
-      RNStripeTerminal.checkForUpdate();
-    }, 'update')
-  }
-
   installUpdate() {
-    return this._wrapPromiseReturn('updateInstall', () => {
-      RNStripeTerminal.installUpdate();
-    })
+    return RNStripeTerminal.installUpdate();
   }
 
   connectReader(serialNumber, locationId) {
-    return this._wrapPromiseReturn('readerConnection', () => {
+    return this._wrapPromiseReturn("readerConnection", () => {
       RNStripeTerminal.connectReader(serialNumber, locationId);
     });
   }
 
   disconnectReader() {
-    return this._wrapPromiseReturn('readerDisconnectCompletion', () => {
+    return this._wrapPromiseReturn("readerDisconnectCompletion", () => {
       RNStripeTerminal.disconnectReader();
     });
   }
 
   getConnectedReader() {
-    return this._wrapPromiseReturn('connectedReader', () => {
+    return this._wrapPromiseReturn("connectedReader", () => {
       RNStripeTerminal.getConnectedReader();
-    }).then(data => (data.serialNumber ? data : null));
+    }).then((data) => (data.serialNumber ? data : null));
   }
 
   getConnectionStatus() {
-    return this._wrapPromiseReturn('connectionStatus', () => {
+    return this._wrapPromiseReturn("connectionStatus", () => {
       RNStripeTerminal.getConnectionStatus();
     });
   }
 
   getPaymentStatus() {
-    return this._wrapPromiseReturn('paymentStatus', () => {
+    return this._wrapPromiseReturn("paymentStatus", () => {
       RNStripeTerminal.getPaymentStatus();
     });
   }
 
   getLastReaderEvent() {
-    return this._wrapPromiseReturn('lastReaderEvent', () => {
+    return this._wrapPromiseReturn("lastReaderEvent", () => {
       RNStripeTerminal.getLastReaderEvent();
     });
   }
 
   createPayment(options) {
     return this._wrapPromiseReturn(
-      'paymentCreation',
+      "paymentCreation",
       () => {
         RNStripeTerminal.createPayment(options);
       },
-      'intent',
+      "intent"
     );
   }
 
   createPaymentIntent(options) {
     return this._wrapPromiseReturn(
-      'paymentIntentCreation',
+      "paymentIntentCreation",
       () => {
         RNStripeTerminal.createPaymentIntent(options);
       },
-      'intent'
+      "intent"
     );
   }
 
   retrievePaymentIntent(clientSecret) {
     return this._wrapPromiseReturn(
-      'paymentIntentRetrieval',
+      "paymentIntentRetrieval",
       () => {
         RNStripeTerminal.retrievePaymentIntent(clientSecret);
       },
-      'intent'
+      "intent"
     );
   }
 
   collectPaymentMethod() {
     return this._wrapPromiseReturn(
-      'paymentMethodCollection',
+      "paymentMethodCollection",
       () => {
         RNStripeTerminal.collectPaymentMethod();
       },
-      'intent'
+      "intent"
     );
   }
 
   processPayment() {
     return this._wrapPromiseReturn(
-      'paymentProcess',
+      "paymentProcess",
       () => {
         RNStripeTerminal.processPayment();
       },
-      'intent'
+      "intent"
     );
   }
 
   cancelPaymentIntent() {
     return this._wrapPromiseReturn(
-      'paymentIntentCancel',
+      "paymentIntentCancel",
       () => {
         RNStripeTerminal.cancelPaymentIntent();
       },
-      'intent'
+      "intent"
     );
   }
 
   abortCreatePayment() {
-    return this._wrapPromiseReturn('abortCreatePaymentCompletion', () => {
+    return this._wrapPromiseReturn("abortCreatePaymentCompletion", () => {
       RNStripeTerminal.abortCreatePayment();
     });
   }
 
   abortDiscoverReaders() {
-    return this._wrapPromiseReturn('abortDiscoverReadersCompletion', () => {
+    return this._wrapPromiseReturn("abortDiscoverReadersCompletion", () => {
       RNStripeTerminal.abortDiscoverReaders();
     });
   }
 
   abortInstallUpdate() {
-    return this._wrapPromiseReturn('abortInstallUpdateCompletion', () => {
+    return this._wrapPromiseReturn("abortInstallUpdateCompletion", () => {
       RNStripeTerminal.abortInstallUpdate();
-    })
+    });
   }
 
   startService(options) {
-    if (typeof options === 'string') {
+    if (typeof options === "string") {
       options = { policy: options };
     }
 
     if (this._currentService) {
       return Promise.reject(
-        'A service is already running. You must stop it using `stopService` before starting a new service.',
+        "A service is already running. You must stop it using `stopService` before starting a new service."
       );
     }
 
