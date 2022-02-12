@@ -147,7 +147,7 @@ RCT_EXPORT_METHOD(initialize) {
 
 RCT_EXPORT_METHOD(discoverReaders:(NSInteger *)discoveryMethod simulated:(BOOL *)simulated) {
     [self abortDiscoverReaders];
-    SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:SCPDiscoveryMethodBluetoothScan
+    SCPDiscoveryConfiguration *config = [[SCPDiscoveryConfiguration alloc] initWithDiscoveryMethod:discoveryMethod
                                                                                          simulated:simulated];
     pendingDiscoverReaders = [[SCPTerminal shared] discoverReaders:config
                                                            delegate:self
@@ -198,7 +198,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
         NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
         [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZ"];
         NSString *requiredAt = [formatter stringFromDate:update.requiredAt];
-        
+
         updateDict = @{
                     @"estimatedUpdateTime": [SCPReaderSoftwareUpdate stringFromUpdateTimeEstimate:update.estimatedUpdateTime],
                     @"deviceSoftwareVersion": update.deviceSoftwareVersion ? update.deviceSoftwareVersion : @"",
@@ -213,7 +213,7 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZ"];
     NSString *createdDate = [formatter stringFromDate:intent.created];
-    
+
     return @{
              @"stripeId": intent.stripeId,
              @"created": createdDate,
