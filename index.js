@@ -119,7 +119,7 @@ class StripeTerminal {
     this._fetchConnectionToken = fetchConnectionToken;
     return new Promise((resolve, reject) => {
       if (Platform.OS === "android") {
-        RNStripeTerminal.initialize((status) => {
+        RNStripeTerminal.initializeTerminal((status) => {
           if (status.isInitialized === true) {
             resolve();
           } else {
@@ -127,7 +127,7 @@ class StripeTerminal {
           }
         });
       } else {
-        RNStripeTerminal.initialize();
+        RNStripeTerminal.initializeTerminal();
         resolve();
       }
     });

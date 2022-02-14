@@ -258,7 +258,7 @@ public class RNStripeTerminalModule extends ReactContextBaseJavaModule implement
     }
 
     @ReactMethod
-    public void initialize(com.facebook.react.bridge.Callback callback) {
+    public void initializeTerminal(com.facebook.react.bridge.Callback callback) {
         try {
             //Check if stripe is initialized
             Terminal.getInstance();
