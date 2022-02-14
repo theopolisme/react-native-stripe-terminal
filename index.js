@@ -127,7 +127,7 @@ class StripeTerminal {
           }
         });
       } else {
-        RNStripeTerminal.initialize();
+        RNStripeTerminal.initializeTerminal();
         resolve();
       }
     });
