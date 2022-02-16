@@ -124,7 +124,7 @@ RCT_EXPORT_METHOD(setConnectionToken:(NSString *)token error:(NSString *)errorMe
     }
 }
 
-RCT_EXPORT_METHOD(initialize) {
+RCT_EXPORT_METHOD(initializeTerminal) {
     dispatch_once(&onceToken, ^{
         [SCPTerminal setTokenProvider:self];
     });
