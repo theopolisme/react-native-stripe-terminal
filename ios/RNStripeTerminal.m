@@ -271,6 +271,12 @@ RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
 
         SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
 
+        params.metadata = options[@"metadata"];
+        params.stripeDescription = options[@"description"];
+        params.statementDescriptor = options[@"statementDescription"];
+        params.receiptEmail = options[@"receiptEmail"];
+        params.customer = options[@"customer"];
+
         NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
         if (applicationFeeAmount) {
             params.applicationFeeAmount = [NSNumber numberWithInteger:applicationFeeAmount];
@@ -287,6 +293,12 @@ RCT_EXPORT_METHOD(createPaymentIntent:(NSDictionary *)options) {
     NSString *currency = [RCTConvert NSString:options[@"currency"]];
 
     SCPPaymentIntentParameters *params = [[SCPPaymentIntentParameters alloc] initWithAmount:amount currency:currency];
+
+    params.metadata = options[@"metadata"];
+    params.stripeDescription = options[@"description"];
+    params.statementDescriptor = options[@"statementDescription"];
+    params.receiptEmail = options[@"receiptEmail"];
+    params.customer = options[@"customer"];
 
     NSInteger applicationFeeAmount = [RCTConvert NSInteger:options[@"applicationFeeAmount"]];
 
