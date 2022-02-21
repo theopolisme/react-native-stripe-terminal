@@ -350,6 +350,7 @@ RCT_EXPORT_METHOD(processPayment) {
         if (error) {
             [self sendEventWithName:@"paymentProcess" body:@{
                 @"error": [error localizedDescription],
+                @"apiError": [error localizedDescription],
                 @"code": @(error.code),
                 @"declineCode": error.declineCode ? error.declineCode : @"",
                 @"intent": [self serializePaymentIntent:intent]
