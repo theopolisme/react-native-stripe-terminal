@@ -48,6 +48,7 @@ public class Constants {
 
     //JSON keys
     public static final String ERROR ="error";
+    public static final String API_ERROR = "apiError";
     public static final String CODE="code";
     public static final String BATTERY_LEVEL = "batteryLevel";
     public static final String DEVICE_TYPE = "deviceType";
