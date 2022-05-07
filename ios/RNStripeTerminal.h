@@ -20,6 +20,7 @@
     SCPReaderSoftwareUpdate *readerSoftwareUpdate;
     SCPCancelable *pendingReadPaymentMethod;
     SCPCancelable *pendingCreatePaymentIntent;
+    SCPCancelable *pendingCreateSetupIntent;
     SCPCancelable *pendingDiscoverReaders;
     SCPCancelable *pendingInstallUpdate;
     SCPConnectionTokenCompletionBlock pendingConnectionTokenCompletionBlock;

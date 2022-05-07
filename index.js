@@ -229,11 +229,31 @@ class StripeTerminal {
     );
   }
 
+  retrieveSetupIntent(clientSecret) {
+    return this._wrapPromiseReturn(
+      "setupIntentRetrieval",
+      () => {
+        RNStripeTerminal.retrieveSetupIntent(clientSecret);
+      },
+      "intent"
+    );
+  }
+
   collectPaymentMethod() {
     return this._wrapPromiseReturn(
       "paymentMethodCollection",
       () => {
         RNStripeTerminal.collectPaymentMethod();
+      },
+      "intent"
+    );
+  }
+
+  collectSetupIntentPaymentMethod() {
+    return this._wrapPromiseReturn(
+      "setupIntentPaymentMethodCollection",
+      () => {
+        RNStripeTerminal.collectSetupIntentPaymentMethod();
       },
       "intent"
     );
@@ -249,6 +269,16 @@ class StripeTerminal {
     );
   }
 
+  confirmSetupIntent() {
+    return this._wrapPromiseReturn(
+      "confirmSetupIntent",
+      () => {
+        RNStripeTerminal.confirmSetupIntent();
+      },
+      "intent"
+    );
+  }
+
   cancelPaymentIntent() {
     return this._wrapPromiseReturn(
       "paymentIntentCancel",
@@ -256,6 +286,15 @@ class StripeTerminal {
         RNStripeTerminal.cancelPaymentIntent();
       },
       "intent"
+    );
+  }
+
+  cancelCollectSetupIntentPaymentMethod() {
+    return this._wrapPromiseReturn(
+      "cancelCollectSetupIntentPaymentMethod",
+      () => {
+        RNStripeTerminal.cancelCollectSetupIntentPaymentMethod();
+      }
     );
   }
 
