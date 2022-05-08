@@ -36,6 +36,9 @@ static dispatch_once_t onceToken = 0;
              @"paymentMethodCollection",
              @"paymentProcess",
              @"paymentIntentCancel",
+             @"setupIntentRetrieval",
+             @"setupIntentPaymentMethodCollection",
+             @"confirmSetupIntent",
              @"didRequestReaderInput",
              @"didRequestReaderDisplayMessage",
              @"didReportReaderEvent",
@@ -54,7 +57,8 @@ static dispatch_once_t onceToken = 0;
              @"lastReaderEvent",
              @"abortCreatePaymentCompletion",
              @"abortDiscoverReadersCompletion",
-             @"abortInstallUpdateCompletion"
+             @"abortInstallUpdateCompletion",
+             @"cancelCollectSetupIntentPaymentMethod",
              ];
 }
 
@@ -224,6 +228,18 @@ RCT_EXPORT_METHOD(connectReader:(NSString *)serialNumber location:(NSString *)lo
              };
 }
 
+- (NSDictionary *)serializeSetupIntent:(SCPSetupIntent *)intent {
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZZZZ"];
+    NSString *createdDate = [formatter stringFromDate:intent.created];
+
+    return @{
+             @"stripeId": intent.stripeId,
+             @"created": createdDate,
+             @"customer": intent.customer
+             };
+}
+
 RCT_EXPORT_METHOD(createPayment:(NSDictionary *)options) {
     void (^onIntent) (SCPPaymentIntent * _Nullable intent, NSError * _Nullable error) = ^(SCPPaymentIntent * _Nullable intent, NSError * _Nullable creationError) {
         if (creationError) {
@@ -329,6 +345,17 @@ RCT_EXPORT_METHOD(retrievePaymentIntent:(NSString *)clientSecret) {
     }];
 }
 
+RCT_EXPORT_METHOD(retrieveSetupIntent:(NSString *)clientSecret) {
+    [SCPTerminal.shared retrieveSetupIntent:clientSecret completion:^(SCPSetupIntent * _Nullable intent_, NSError * _Nullable error) {
+        intent = intent_;
+        if (error) {
+            [self sendEventWithName:@"setupIntentRetrieval" body:@{@"error": [error localizedDescription]}];
+        } else {
+            [self sendEventWithName:@"setupIntentRetrieval" body:@{@"intent": [self serializeSetupIntent:intent]}];
+        }
+    }];
+}
+
 RCT_EXPORT_METHOD(collectPaymentMethod) {
     pendingCreatePaymentIntent = [SCPTerminal.shared collectPaymentMethod:intent completion:^(SCPPaymentIntent * _Nullable collectedIntent, NSError * _Nullable error) {
         pendingCreatePaymentIntent = nil;
@@ -341,6 +368,22 @@ RCT_EXPORT_METHOD(collectPaymentMethod) {
         } else {
             intent = collectedIntent;
             [self sendEventWithName:@"paymentMethodCollection" body:@{@"intent": [self serializePaymentIntent:intent]}];
+        }
+    }];
+}
+
+RCT_EXPORT_METHOD(collectSetupIntentPaymentMethod) {
+    pendingCreateSetupIntent = [SCPTerminal.shared collectSetupIntentPaymentMethod:intent customerConsentCollected:true completion:^(SCPSetupIntent * _Nullable collectedIntent, NSError * _Nullable error) {
+        pendingCreateSetupIntent = nil;
+        if (error) {
+            [self sendEventWithName:@"setupIntentPaymentMethodCollection" body:@{
+                                                                    @"error": [error localizedDescription],
+                                                                    @"code": @(error.code),
+                                                                    @"intent": [self serializeSetupIntent:intent]
+                                                                    }];
+        } else {
+            intent = collectedIntent;
+            [self sendEventWithName:@"setupIntentPaymentMethodCollection" body:@{@"intent": [self serializeSetupIntent:intent]}];
         }
     }];
 }
@@ -359,6 +402,24 @@ RCT_EXPORT_METHOD(processPayment) {
         } else {
             intent = confirmedIntent;
             [self sendEventWithName:@"paymentProcess" body:@{@"intent": [self serializePaymentIntent:confirmedIntent]}];
+        }
+    }];
+}
+
+RCT_EXPORT_METHOD(confirmSetupIntent) {
+    [SCPTerminal.shared confirmSetupIntent:intent completion:^(SCPSetupIntent * _Nullable confirmedIntent, SCPConfirmSetupIntentError * _Nullable error) {
+        if (error) {
+            [self sendEventWithName:@"confirmSetupIntent" body:@{
+                @"error": [error localizedDescription],
+                @"apiError": [error localizedDescription],
+                @"code": @(error.code),
+                @"declineCode": error.declineCode ? error.declineCode : @"",
+                @"intent": [self serializeSetupIntent:intent]
+                }];
+
+        } else {
+            intent = confirmedIntent;
+            [self sendEventWithName:@"confirmSetupIntent" body:@{@"intent": [self serializeSetupIntent:confirmedIntent]}];
         }
     }];
 }
@@ -527,6 +588,21 @@ RCT_EXPORT_METHOD(abortInstallUpdate) {
         return;
     }
     [self sendEventWithName:@"abortInstallUpdateCompletion" body:@{}];
+}
+
+RCT_EXPORT_METHOD(cancelCollectSetupIntentPaymentMethod) {
+    if (pendingCreateSetupIntent) {
+        [pendingCreateSetupIntent cancel:^(NSError * _Nullable error) {
+            if (error) {
+                [self sendEventWithName:@"cancelCollectSetupIntentPaymentMethod" body:@{@"error": [error localizedDescription]}];
+            } else {
+                pendingDiscoverReaders = nil;
+                [self sendEventWithName:@"cancelCollectSetupIntentPaymentMethod" body:@{}];
+            }
+        }];
+        return;
+    }
+    [self sendEventWithName:@"cancelCollectSetupIntentPaymentMethod" body:@{}];
 }
 
 RCT_EXPORT_METHOD(getConnectionStatus) {
