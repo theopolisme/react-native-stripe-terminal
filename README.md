@@ -4,7 +4,9 @@ React Native wrapper for the [Stripe Terminal](https://stripe.com/docs/terminal)
 
 ## Getting started
 
-First, follow all Stripe instructions under ["Install the iOS SDK"](https://stripe.com/docs/terminal/sdk/ios#install) and/or ["Install the Android SDK"](https://stripe.com/docs/terminal/sdk/android#install) (depending on your platform). Then:
+First, follow the Stripe instructions under ["iOS: Configure your app"](https://stripe.com/docs/terminal/payments/setup-sdk?terminal-sdk-platform=ios#configure) and/or ["Android: Configure your app"](https://stripe.com/docs/terminal/payments/setup-sdk?terminal-sdk-platform=android#configure) (depending on your platform) to setup the required permissions. 
+
+Then:
 
 `$ npm install git+https://github.com/theopolisme/react-native-stripe-terminal.git --save`
 
